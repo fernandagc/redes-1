@@ -1,17 +1,15 @@
 #include <stdio.h>
 #include <string.h>
 
-#ifndef __OPERATIONS__
-#define __OPERATIONS__
-
-
-#define INITMSG 0x7e
+#ifndef __COMMANDS__
+#define __COMMANDS__
+#define INITMSG FA
+#define TAM_MSG 15
+#define Cliente 10
+#define Servidor 01
 #define BUFFER 256
 #define ACK 0x8
 #define NACK 0x9
-#define TAM_MSG 15
-#define CLIENTE 10
-#define SERVIDOR 01
 
 typedef struct Mensagem
 {
@@ -21,7 +19,7 @@ typedef struct Mensagem
     unsigned char Destino: 2;				// end de destino
     unsigned char Sequencia;                // ordem de sequencia da mensagem
     unsigned char Tipo : 4;                 // tipo da mensagem (CD, Ack, (...), ls)
-    unsigned char Dados[15];                // dados a serem enviados da mensagem
+    unsigned char Dados[TAM_MSG];                // dados a serem enviados da mensagem
     unsigned char Paridade;                 // paridade da mensagem
 } Mensagem;
 
@@ -29,7 +27,7 @@ int rawSocket();
 
 char* initPort(int tam);
 
-int defineTipo(char* Comando, char* Dados, char* Parametro1, char* Parametro2, char* Parametro3);
+int cmd(char* cmd_, char* Dados, char* param1, char* param2, char* param3);
 
 void cd(short int *error, char *diretorio);
 
@@ -37,11 +35,11 @@ void lcd(char *path);
 
 void ls(short int *error);
 
-char* lls(int index, long int *tamanhoLS);
+char* lls(int index, long int *sizeParam);
 
-void ver(short int *error, char *arquivo);
+void verArquivo(short int *error, char *arquivo);
 
-char* verArquivo(char *nomeArquivo,long int *tamArquivo, int local);
+char* ver(char *nomeArquivo,long int *tamArquivo, int local);
 
 void edit(int numeroLinha,char *nomeArquivo, char *txt, int tamConteudo);
 
@@ -53,13 +51,13 @@ int comparar(Mensagem priMsg, Mensagem ultMsg);
 
 Mensagem newMsg(int Origem, int Destino, char *Dados, int Tipo, int Sequencia);
 
-void enviaACK(int Origem, int Destino, int Soquete, int Sequencia, int Tipo, Mensagem mRecebido, Mensagem mEnviado);
+void sendACK(int Origem, int Destino, int Soquete, int Sequencia, int Tipo, Mensagem recebida, Mensagem enviada);
 
-void enviaERR(int Origem, int Destino, int Soquete, int Sequencia, int Tipo, short int  error, Mensagem mEnviado);
+void sendERR(int Origem, int Destino, int Soquete, int Sequencia, int Tipo, short int  error, Mensagem enviada);
 
-Mensagem trataNACK(int Soquete, int Sequencia, Mensagem mRecebido, Mensagem mEnviado);
+Mensagem ttNACK(int Soquete, int Sequencia, Mensagem recebida, Mensagem enviada);
 
-void enviaNACK(int Origem, int Destino, int Socket, int Sequencia, Mensagem mRecebido, Mensagem mEnviado);
+void sendNACK(int Origem, int Destino, int Socket, int Sequencia, Mensagem recebida, Mensagem enviada);
 
 int checkParity(Mensagem mensagemRecebida);
 
@@ -67,9 +65,9 @@ void showLine(short int *error, char *linha, char* arquivo);
 
 void strcut(char *Cortado, char *Resultado, char* Cortador);
 
-char* strbcut(char *Parametro3, char *Conteudo, int local, int tam);
+char* strbcut(char *param3, char *Conteudo, int local, int tam);
 
-char* list(int index, long int *tamanhoLS);
+char* list(int index, long int *sizeParam);
 
 char* linha(int numeroLinha, char *nomeArquivo, long int *tamLinha, int local);
 

@@ -70,61 +70,61 @@ char* initPort(int tam)
     return porta;
 }
 
-int defineTipo(char* Comando, char* Dados, char* Parametro1, char* Parametro2, char* Parametro3)
+int cmd(char* cmd_, char* Dados, char* param1, char* param2, char* param3)
 {
     int tipo;
 
-    if (!strcmp(Comando, "cd"))
+    if (!strcmp(cmd_, "cd"))
     {
         tipo = 0x0;
-        strcpy(Dados, Parametro1);
+        strcpy(Dados, param1);
     }
-    else if (!strcmp(Comando, "lcd"))
+    else if (!strcmp(cmd_, "lcd"))
     {
         tipo = 0x1;
-        strcpy(Dados, Parametro1);
+        strcpy(Dados, param1);
     }
-     if (!strcmp(Comando, "ls"))
+     if (!strcmp(cmd_, "ls"))
     {
         tipo = 0x2;
         Dados = NULL;
     }
-    else if (!strcmp(Comando, "lls"))
+    else if (!strcmp(cmd_, "lls"))
     {
         tipo = 0x3;
         Dados = NULL;
     }                
-    else if (!strcmp(Comando, "ver"))
+    else if (!strcmp(cmd_, "ver"))
     {
         tipo = 0x4;
-        strcpy(Dados, Parametro1);    
+        strcpy(Dados, param1);    
     }    
-    else if (!strcmp(Comando, "linha"))
+    else if (!strcmp(cmd_, "linha"))
     {   
         tipo = 0x5;
-        strcpy(Dados, Parametro2);
+        strcpy(Dados, param2);
     }    
-    else if (!strcmp(Comando, "linhas"))
+    else if (!strcmp(cmd_, "linhas"))
     {   
         tipo = 0x6;
-        strcpy(Dados, Parametro3);
+        strcpy(Dados, param3);
     }
-    else if (!strcmp(Comando, "edit"))
+    else if (!strcmp(cmd_, "edit"))
     {
         tipo = 0x7;
-        strcpy(Dados, Parametro2);
+        strcpy(Dados, param2);
     }
-    else if (!strcmp(Comando, "ack"))
+    else if (!strcmp(cmd_, "ack"))
     {
         tipo = 0x8;
         Dados = NULL;
     }    
-    else if (!strcmp(Comando, "nack"))
+    else if (!strcmp(cmd_, "nack"))
     {
         tipo = 0x9;
         Dados = NULL;
     }
-    else if (!strcmp(Comando, "err"))
+    else if (!strcmp(cmd_, "err"))
     {
         tipo = 0xF;
         Dados = NULL;
@@ -173,7 +173,7 @@ void ls(short int *error)
 
 }
 
-char* lls(int index, long int *tamanhoLS)
+char* lls(int index, long int *sizeParam)
 {
     FILE *fp;
     int status;
@@ -182,7 +182,7 @@ char* lls(int index, long int *tamanhoLS)
     Conteudo = initPort(1024);
     char* Lixo = initPort(1024);
     
-    if (*tamanhoLS != 0)
+    if (*sizeParam != 0)
     { 
         fp = popen("ls", "r");
 
@@ -205,7 +205,7 @@ char* lls(int index, long int *tamanhoLS)
     {
         fp = popen("ls | wc -l", "r");
         fgets(Conteudo, 1024, fp); 
-        *tamanhoLS = atoi(Conteudo) + 1;
+        *sizeParam = atoi(Conteudo) + 1;
         status = pclose(fp);
         if (status == -1) 
         {
@@ -217,7 +217,7 @@ char* lls(int index, long int *tamanhoLS)
     return Conteudo;
 }
 
-void ver(short int *error, char *arquivo)
+void verArquivo(short int *error, char *arquivo)
 {
     FILE *arq = fopen(arquivo, "r");
 
@@ -231,7 +231,7 @@ void ver(short int *error, char *arquivo)
     }
 }
 
-char* verArquivo(char *nomeArquivo,long int *tamArquivo, int local)
+char* ver(char *nomeArquivo,long int *tamArquivo, int local)
 {
     FILE* arq;
     char* Conteudo = NULL;
@@ -350,73 +350,73 @@ Mensagem newMsg(int Origem, int Destino, char *Dados, int Tipo, int Sequencia)
     return m;
 }
 
-void enviaACK(int Origem, int Destino, int Socket, int Sequencia, int Tipo, Mensagem mRecebido, Mensagem mEnviado)
+void sendACK(int Origem, int Destino, int Socket, int Sequencia, int Tipo, Mensagem recebida, Mensagem enviada)
 {
-    mEnviado = newMsg(Origem, Destino, "\0", Tipo, Sequencia);
-    sendMsg(Socket, mEnviado);
+    enviada = newMsg(Origem, Destino, "\0", Tipo, Sequencia);
+    sendMsg(Socket, enviada);
 }
 
-void enviaERR(int Origem, int Destino, int Socket, int Sequencia, int Tipo, short int  error, Mensagem mEnviado)
+void sendERR(int Origem, int Destino, int Socket, int Sequencia, int Tipo, short int  error, Mensagem enviada)
 {
     switch (error)
     {
         case 1:
-            mEnviado = newMsg(Origem, Destino, "1", Tipo, Sequencia);
+            enviada = newMsg(Origem, Destino, "1", Tipo, Sequencia);
             break;
         case 2:
-            mEnviado = newMsg(Origem, Destino, "2", Tipo, Sequencia);
+            enviada = newMsg(Origem, Destino, "2", Tipo, Sequencia);
             break;
         case 3:
-            mEnviado = newMsg(Origem, Destino,"3", Tipo, Sequencia);
+            enviada = newMsg(Origem, Destino,"3", Tipo, Sequencia);
             break;
         case 4:
-            mEnviado = newMsg(Origem, Destino,"4", Tipo, Sequencia);
+            enviada = newMsg(Origem, Destino,"4", Tipo, Sequencia);
             break;   
         default:
             break;
     }
-    sendMsg(Socket, mEnviado);
+    sendMsg(Socket, enviada);
 }
 
-Mensagem trataNACK(int Socket, int Sequencia, Mensagem mRecebido, Mensagem mEnviado)
+Mensagem ttNACK(int Socket, int Sequencia, Mensagem recebida, Mensagem enviada)
 {
-    mRecebido.Inicio = 0;
-    mEnviado.Inicio = 0;
+    recebida.Inicio = 0;
+    enviada.Inicio = 0;
     
-    while(mRecebido.Tipo == 0x9)
+    while(recebida.Tipo == 0x9)
     {
-        sendMsg(Socket, mEnviado);
+        sendMsg(Socket, enviada);
     
-        while ((mRecebido.Inicio == 0) || comparar(mRecebido, mEnviado))
+        while ((recebida.Inicio == 0) || comparar(recebida, enviada))
         {
-            mRecebido = receiveMsg(Socket, mRecebido);
+            recebida = receiveMsg(Socket, recebida);
         } 
     
-        mRecebido.Inicio = 0;
-        mEnviado.Inicio = 0;
+        recebida.Inicio = 0;
+        enviada.Inicio = 0;
     }
 
-    return mRecebido;
+    return recebida;
 }
 
-void enviaNACK(int Origem, int Destino, int Socket, int Sequencia, Mensagem mRecebido, Mensagem mEnviado)
+void sendNACK(int Origem, int Destino, int Socket, int Sequencia, Mensagem recebida, Mensagem enviada)
 {        
     
-    mRecebido.Inicio = 0;
-    mEnviado.Inicio = 0;
+    recebida.Inicio = 0;
+    enviada.Inicio = 0;
     
-    while(!checkParity(mRecebido))
+    while(!checkParity(recebida))
     {
-        mEnviado = newMsg(Origem, Destino, "\0", 0x9, Sequencia);
-        sendMsg(Socket, mEnviado);    
+        enviada = newMsg(Origem, Destino, "\0", 0x9, Sequencia);
+        sendMsg(Socket, enviada);    
 
-        while ((mRecebido.Inicio == 0) || comparar(mRecebido, mEnviado))
+        while ((recebida.Inicio == 0) || comparar(recebida, enviada))
         {
-            mRecebido = receiveMsg(Socket, mRecebido);
+            recebida = receiveMsg(Socket, recebida);
         }
         
-        mRecebido.Inicio = 0;
-        mEnviado.Inicio = 0;
+        recebida.Inicio = 0;
+        enviada.Inicio = 0;
     }
 }
 
@@ -507,25 +507,25 @@ void strcut(char *Cortado, char *Resultado, char* Cortador)
     free(Aux);
 }
 /////ACHAR FUNCAO
-char* strbcut(char *Parametro3, char *Conteudo, int local, int tam)
+char* strbcut(char *param3, char *Conteudo, int local, int tam)
 {    
     int i = 0; 
     while (i < TAM_MSG && i < tam)
     {
-        Conteudo[i] = Parametro3[local + i];    
+        Conteudo[i] = param3[local + i];    
         i++;
     }
     Conteudo[i] = '\0';
     return Conteudo;
 }
 ////ACHAR FUNCAO
-char* list(int index, long int *tamanhoLS)
+char* list(int index, long int *sizeParam)
 {
     FILE *fp;
     char *Conteudo = initPort(TAM_MSG);
 	int status, i = 0;
     
-    if (*tamanhoLS != 0)
+    if (*sizeParam != 0)
     { 
         fp = popen("ls", "r");
         if (fp == NULL)
@@ -551,7 +551,7 @@ char* list(int index, long int *tamanhoLS)
     {
         fp = popen("ls | wc -l", "r");
         fgets(Conteudo, 1024, fp); 
-        *tamanhoLS = atoi(Conteudo);
+        *sizeParam = atoi(Conteudo);
     
         status = pclose(fp);
         if (status == -1) 

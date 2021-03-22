@@ -1,12 +1,10 @@
-#include <stdio.h>
-#include "operations.h"
-
-#include <time.h>
+#include "commands.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <signal.h>
+#include <time.h>
 #include <linux/if.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -16,20 +14,20 @@
 
 int main()
 {
-    time_t inicio, fim;
+    Mensagem enviada, recebida;
+    enviada.Inicio = 0;
+    recebida.Inicio = 0;
+    char *param1, *param2, *param3;
+    char *CMDCLIENT, *cmd_, *dadosEnviados;
+    int Tipo;
+	int Sequencia = 0, multSeq = 0, local = 0, tam = 0;
+    long int sizeParam;
+    time_t inicio, limite;
     short int timeOut, error;
-    char *CMDUSER, *Comando, *Parametro1, *Parametro2, *Parametro3, *DadosEnviado;
-    int Tipo, Sequencia = 0, multSeq = 0, local = 0, tam = 0;
-    long int tamanhoLS;
-    int Socket;
-    Mensagem mEnviado, mRecebido;
-    
-    mEnviado.Inicio = 0;
-    mRecebido.Inicio = 0;
-
     setvbuf (stdout, 0, _IONBF, 0);
     
-    Socket = rawSocket("lo");
+	int Socket;
+	Socket = rawSocket();
     if (Socket == -1)
     {
         perror("Erro no socket.\n");
@@ -38,181 +36,137 @@ int main()
     	perror("Interface cliente conectada.");
 	};
 
-    CMDUSER = initPort(0); 
-    Comando = initPort(0);
-    Parametro1 = initPort(0);
-    Parametro2 = initPort(0);
-    Parametro3 = initPort(0);
-    DadosEnviado = initPort(15);
+    CMDCLIENT = initPort(0); 
+    cmd_ = initPort(0);
 
+    dadosEnviados = initPort(TAM_MSG);
+
+    param1 = initPort(0);
+    param2 = initPort(0);
+    param3 = initPort(0);
+    
     while (1)
     {
-        fgets(CMDUSER, BUFFER, stdin);          
-        
-        strcut(CMDUSER, Comando, " ");
-        strcut(CMDUSER, Parametro1, " ");
-        strcut(CMDUSER, Parametro2, " ");
+    	printf("Digite o comando desejado: \n");
+        fgets(CMDCLIENT, BUFFER, stdin);          
+        strcut(CMDCLIENT, cmd_, " ");
+        strcut(CMDCLIENT, param1, " ");
+        strcut(CMDCLIENT, param2, " ");
 
-        if (strcmp(Comando, "edit"))
-            strcut(CMDUSER, Parametro3, " ");
-        else
-        {
-            strcut(CMDUSER, Parametro3, "\"");                                            
-            strcut(CMDUSER, Parametro3, "\"");                        
+        if (strcmp(cmd_, "edit"))
+            strcut(CMDCLIENT, param3, " ");
+        else {
+            strcut(CMDCLIENT, param3, "\"");                                            
+            strcut(CMDCLIENT, param3, "\"");                        
         }
         
-        Tipo = defineTipo(Comando, DadosEnviado, Parametro1, Parametro2, Parametro3);
+        Tipo = cmd(cmd_, dadosEnviados, param1, param2, param3);
         
-
-        if (strlen(DadosEnviado) > 15)
-        {
-            printf("Erro, parametro passado tem mais de 15 bytes\n");
+        if (strlen(dadosEnviados) > TAM_MSG){
+            printf("Parametro passado possui mais do que TAM_MSG bytes\n");
             continue;
-        }
-        else 
-        {
-            mEnviado = newMsg(Cliente, Servidor, DadosEnviado, Tipo, 0x0);
-            if(mEnviado.Tipo != 0x1 && mEnviado.Tipo != 0x3)
-                sendMsg(Socket, mEnviado);
-            
-            switch (mEnviado.Tipo)
-            {
-//--------------CD----------------------------------------------------------------------------------------------------------------
-                case 0x0:
-                    
-                    mRecebido.Inicio = 0;
-                    mEnviado.Inicio = 0;
-                    
+        } else {
+            enviada = newMsg(Cliente, Servidor, dadosEnviados, Tipo, 0x0);
+            if(enviada.Tipo != 0x1 && enviada.Tipo != 0x3)
+                sendMsg(Socket, enviada);
+            switch (enviada.Tipo) {
+                case 0x0: //cd   
+					enviada.Inicio = 0;  
+                    recebida.Inicio = 0;
                     time(&inicio);
-                    while ((mRecebido.Inicio != INITMSG) || ( (mRecebido.Tipo != ACK && mRecebido.Tipo != NACK && mRecebido.Tipo != 0xF) || (int)mRecebido.Sequencia != Sequencia))
-                    {
-                        mRecebido = receiveMsg(Socket, mRecebido);
-                        time(&fim);
-                        if (difftime(fim, inicio) > 1)
-                        {
+                    while (((recebida.Tipo != ACK && recebida.Tipo != NACK && recebida.Tipo != 0xF) || (int)recebida.Sequencia != Sequencia) || (recebida.Inicio != INITMSG)) {
+                        recebida = receiveMsg(Socket, recebida);
+                        time(&limite);
+                        if (difftime(limite, inicio) > 1)                        {
                             timeOut = 1;
                             break;
                         }
                     } 
-                    
                     if (timeOut == 1)
                         break;
-
-                    if (mRecebido.Tipo == NACK)
-                        mRecebido = trataNACK(Socket, Sequencia, mRecebido, mEnviado);
-                    
-                    if(mRecebido.Tipo == 0xF)
-                    {  
-                        if (mRecebido.Dados[0] == '1')
-                            printf("Erro permissao negada");
-                        
-                        if (mRecebido.Dados[0] == '2')
-                            printf("Erro diretorio nao existe");
-                        
+                    if (recebida.Tipo == NACK)
+                        recebida = ttNACK(Socket, Sequencia, recebida, enviada);
+                    if(recebida.Tipo == 0xF) {  
+                        if (recebida.Dados[0] == '1')
+                            printf("Permissao negada");
+                        if (recebida.Dados[0] == '2')
+                            printf("Diretorio nao existe");
                         error = 1;
                     }
-
-                    if (error == 1)
-                    {    
+                    if (error == 1) {    
                         printf("\n");
                         break;
                     }
-                    
                     break;
 
-//----------------LIST---------------------------------------------------------------------------------------------------------------------------- 
-                case 0x2:
-                    
-                    mRecebido.Inicio = 0;
-                    mEnviado.Inicio = 0;
-                    
+                case 0x2://ls
+                    enviada.Inicio = 0;
+					recebida.Inicio = 0;
                     time(&inicio);
-                    while ( (mRecebido.Inicio != INITMSG) || ( (mRecebido.Tipo != 0xb && mRecebido.Tipo != NACK && mRecebido.Tipo != 0xF) || (int)mRecebido.Sequencia != Sequencia) )
+                    while ( (recebida.Inicio != INITMSG) || ( (recebida.Tipo != 0xb && recebida.Tipo != NACK && recebida.Tipo != 0xF) || (int)recebida.Sequencia != Sequencia) )
                     {
-                        mRecebido = receiveMsg(Socket, mRecebido);
-                        time(&fim);
-                        if (difftime(fim, inicio) > 1)
+                        recebida = receiveMsg(Socket, recebida);
+                        time(&limite);
+                        if (difftime(limite, inicio) > 1)
                         {
                             timeOut = 1;
                             break;
                         }
                     } 
-
                     if (timeOut == 1)
                         break;
-
-                    //caso nack
-                    if(mRecebido.Tipo == 0x9)
-                    {
-                        mRecebido = trataNACK(Socket, Sequencia, mRecebido, mEnviado);
+                    if(recebida.Tipo == 0x9) {
+                        recebida = ttNACK(Socket, Sequencia, recebida, enviada);
                     }
-                    
-                    if(mRecebido.Tipo == 0xb)
-                    {
-                        if(!checkParity(mRecebido))
-                        {
-                            enviaNACK(Cliente, Servidor, Socket, Sequencia, mRecebido, mEnviado);
+                    if(recebida.Tipo == 0xb) {
+                        if(!checkParity(recebida)) {
+                            sendNACK(Cliente, Servidor, Socket, Sequencia, recebida, enviada);
                         }
                         Sequencia++;
-                        enviaACK(Cliente, Servidor, Socket, Sequencia, 0x8, mRecebido, mEnviado);
+                        sendACK(Cliente, Servidor, Socket, Sequencia, 0x8, recebida, enviada);
                     }
-                    
-                    if(mRecebido.Tipo == 0xF)
-                    {  
-                        if (mRecebido.Dados[0] == '1')
-                            printf("Acesso proibido/sem permissao");
+                    if(recebida.Tipo == 0xF) {  
+                        if (recebida.Dados[0] == '1')
+                            printf("Sem permissao");
                         error = 1;
                     }
-
-                    if (error == 1)
-                    {    
+                    if (error == 1) {    
                         printf("\n");
                         break;
                     }
-
-                    while(mRecebido.Tipo != 0xd)
-                    {
-                        mRecebido.Inicio = 0;
-                        mEnviado.Inicio = 0;
+                    while(recebida.Tipo != 0xd) {
+                        recebida.Inicio = 0;
+                        enviada.Inicio = 0;
                         time(&inicio);
-                        while ( (mRecebido.Inicio != INITMSG) || ( (mRecebido.Tipo != 0xb && mRecebido.Tipo != 0xd && mRecebido.Tipo != NACK) ||(int) mRecebido.Sequencia != Sequencia))
-                        {
-                            mRecebido = receiveMsg(Socket, mRecebido);
-                            time(&fim);
-                            if (difftime(fim, inicio) > 1)
-                            {
+                        while ( (recebida.Inicio != INITMSG) || ( (recebida.Tipo != 0xb && recebida.Tipo != 0xd && recebida.Tipo != NACK) ||(int) recebida.Sequencia != Sequencia)) {
+                            recebida = receiveMsg(Socket, recebida);
+                            time(&limite);
+                            if (difftime(limite, inicio) > 1) {
                                 timeOut = 1;
                                 break;
                             }
-                        } 
-                        
+                        }    
                         if (timeOut == 1)
                             break;
-
                         Sequencia++;
-                        if (Sequencia == 256)
-                        {
+                        if (Sequencia == 256) {
                             Sequencia = 0;
                             multSeq++;
                         }
-                        if(mRecebido.Tipo == NACK)
-                        {
-                            mRecebido = trataNACK(Socket, Sequencia, mRecebido, mEnviado);
+                        if(recebida.Tipo == NACK) {
+                            recebida = ttNACK(Socket, Sequencia, recebida, enviada);
                         }
-                        if (mRecebido.Tipo == 0xb)
-                        {
-                            if (!checkParity(mRecebido))
-                                enviaNACK(Cliente, Servidor, Socket, Sequencia, mRecebido, mEnviado);
-                            enviaACK(Cliente, Servidor, Socket, Sequencia, 0x8, mRecebido, mEnviado);
+                        if (recebida.Tipo == 0xb) {
+                            if (!checkParity(recebida))
+                                sendNACK(Cliente, Servidor, Socket, Sequencia, recebida, enviada);
+                            sendACK(Cliente, Servidor, Socket, Sequencia, 0x8, recebida, enviada);
                         }
-                        
-                        if (mRecebido.Sequencia == 1)
+                        if (recebida.Sequencia == 1)
                             continue;
                         
-                        for (int i = 0; i < (int)mRecebido.Tamanho; i++)
-                        {
-                            if (mRecebido.Dados[i] != '\n')
-                                printf("%c",mRecebido.Dados[i]);
+                        for (int i = 0; i < (int)recebida.Tamanho; i++) {
+                            if (recebida.Dados[i] != '\n')
+                                printf("%c",recebida.Dados[i]);
                             else
                                 printf(" ");
                         }
@@ -221,66 +175,55 @@ int main()
 
                     break;
 
-//----------------VER-----------------------------------------------------------------------------------------------------------------------------
-                case 0x4:
-                    mRecebido.Inicio = 0;
-                    mEnviado.Inicio = 0;
-                    
+                case 0x4: //ver
+                	enviada.Inicio = 0;
+                    recebida.Inicio = 0;
                     time(&inicio);
-                    while ( (mRecebido.Inicio != INITMSG) || ( (mRecebido.Tipo != 0xc && mRecebido.Tipo != NACK && mRecebido.Tipo != 0xF) || (int)mRecebido.Sequencia != Sequencia) )
-                    {
-                        mRecebido = receiveMsg(Socket, mRecebido);
-                        time(&fim);
-                        if (difftime(fim, inicio) > 1)
+                    while (( (recebida.Tipo != 0xc && recebida.Tipo != NACK && recebida.Tipo != 0xF) || (int)recebida.Sequencia != Sequencia)  || (recebida.Inicio != INITMSG)) {
+                        recebida = receiveMsg(Socket, recebida);
+                        time(&limite);
+                        if (difftime(limite, inicio) > 1)
                         {
                             timeOut = 1;
                             break;
                         }
                     } 
-        
                     if (timeOut == 1)
                         break;
 
-                    //caso nack
-                    if(mRecebido.Tipo == 0x9)
-                    {
-                        mRecebido = trataNACK(Socket, Sequencia, mRecebido, mEnviado);
+                    if(recebida.Tipo == 0x9) {
+                        recebida = ttNACK(Socket, Sequencia, recebida, enviada);
                     }
                     
-                    if(mRecebido.Tipo == 0xc)
+                    if(recebida.Tipo == 0xc)
                     {
-                        if(!checkParity(mRecebido))
+                        if(!checkParity(recebida))
                         {
-                            enviaNACK(Cliente, Servidor, Socket, Sequencia, mRecebido, mEnviado);
+                            sendNACK(Cliente, Servidor, Socket, Sequencia, recebida, enviada);
                         }
                         Sequencia++;
-                        enviaACK(Cliente, Servidor, Socket, Sequencia, 0x8, mRecebido, mEnviado);
+                        sendACK(Cliente, Servidor, Socket, Sequencia, 0x8, recebida, enviada);
                     }
                     
-                    if(mRecebido.Tipo == 0xF)
-                    {  
-                        if (mRecebido.Dados[0] == '3')
-                            printf("Erro arquivo inexistente");
+                    if(recebida.Tipo == 0xF)  {  
+                        if (recebida.Dados[0] == '3')
+                            printf("Arquivo inexistente");
                         error = 1;
                     }
 
-                    if (error == 1)
-                    {    
+                    if (error == 1) {    
                         printf("\n");
                         break;
                     }
                     
-                    while(mRecebido.Tipo != 0xd)
-                    {
-                        mRecebido.Inicio = 0;
-                        mEnviado.Inicio = 0;
+                    while(recebida.Tipo != 0xd) {
+                        recebida.Inicio = 0;
+                        enviada.Inicio = 0;
                         time(&inicio);
-                        while ( (mRecebido.Inicio != INITMSG) || ( (mRecebido.Tipo != 0xc && mRecebido.Tipo != 0xd && mRecebido.Tipo != NACK) ||(int) mRecebido.Sequencia != Sequencia))
-                        {
-                                                
-                            mRecebido = receiveMsg(Socket, mRecebido);
-                            time(&fim);
-                            if (difftime(fim, inicio) > 1)
+                        while ( (recebida.Inicio != INITMSG) || ( (recebida.Tipo != 0xc && recebida.Tipo != 0xd && recebida.Tipo != NACK) ||(int) recebida.Sequencia != Sequencia)){
+                            recebida = receiveMsg(Socket, recebida);
+                            time(&limite);
+                            if (difftime(limite, inicio) > 1)
                             {
                                 timeOut = 1;
                                 break;
@@ -296,34 +239,33 @@ int main()
                             Sequencia = 0;
                             multSeq++;
                         }
-                        if(mRecebido.Tipo == NACK)
+                        if(recebida.Tipo == NACK)
                         {
-                            mRecebido = trataNACK(Socket, Sequencia, mRecebido, mEnviado);
+                            recebida = ttNACK(Socket, Sequencia, recebida, enviada);
                         }
-                        if (mRecebido.Tipo == 0xc)
+                        if (recebida.Tipo == 0xc)
                         {
-                            if (!checkParity(mRecebido))
-                                enviaNACK(Cliente, Servidor, Socket, Sequencia, mRecebido, mEnviado);
-                            enviaACK(Cliente, Servidor, Socket, Sequencia, 0x8, mRecebido, mEnviado);
+                            if (!checkParity(recebida))
+                                sendNACK(Cliente, Servidor, Socket, Sequencia, recebida, enviada);
+                            sendACK(Cliente, Servidor, Socket, Sequencia, 0x8, recebida, enviada);
                         }
                         
-                        for (int i = 0; i < (int)mRecebido.Tamanho; i++)
-                            printf("%c",mRecebido.Dados[i]);
+                        for (int i = 0; i < (int)recebida.Tamanho; i++)
+                            printf("%c",recebida.Dados[i]);
                     }
                     printf("\n");
                     break;
 
-//----------------LINHA----------------------------------------------------------------------------------------------------------------------------
-                case 0x5:
-                    mRecebido.Inicio = 0;
-                    mEnviado.Inicio = 0;
+                case 0x5: //linha
+                    recebida.Inicio = 0;
+                    enviada.Inicio = 0;
                     
                     time(&inicio);
-                    while ( (mRecebido.Inicio != INITMSG) || ( (mRecebido.Tipo != ACK && mRecebido.Tipo != NACK && mRecebido.Tipo != 0xF) || (int)mRecebido.Sequencia != Sequencia) )
+                    while ( (recebida.Inicio != INITMSG) || ( (recebida.Tipo != ACK && recebida.Tipo != NACK && recebida.Tipo != 0xF) || (int)recebida.Sequencia != Sequencia) )
                     {
-                        mRecebido = receiveMsg(Socket, mRecebido);
-                        time(&fim);
-                        if (difftime(fim, inicio) > 1)
+                        recebida = receiveMsg(Socket, recebida);
+                        time(&limite);
+                        if (difftime(limite, inicio) > 1)
                         {
                             timeOut = 1;
                             break;
@@ -333,22 +275,22 @@ int main()
                     if (timeOut == 1)
                         break;
 
-                    //caso nack
-                    if(mRecebido.Tipo == 0x9)
+                    
+                    if(recebida.Tipo == 0x9)
                     {
-                        mRecebido = trataNACK(Socket, Sequencia, mRecebido, mEnviado);
+                        recebida = ttNACK(Socket, Sequencia, recebida, enviada);
                     }
                     
-                    if(mRecebido.Tipo == ACK)
+                    if(recebida.Tipo == ACK)
                     {
                         Sequencia++;
-                        mEnviado = newMsg(Cliente, Servidor, Parametro1, 0xa, Sequencia);
-                        sendMsg(Socket, mEnviado);
+                        enviada = newMsg(Cliente, Servidor, param1, 0xa, Sequencia);
+                        sendMsg(Socket, enviada);
                     }
-                    if(mRecebido.Tipo == 0xF)
+                    if(recebida.Tipo == 0xF)
                     {  
-                        if (mRecebido.Dados[0] == '3')
-                            printf("Erro arquivo inexistente");
+                        if (recebida.Dados[0] == '3')
+                            printf("Arquivo inexistente");
                         error = 1;
                     }
 
@@ -359,11 +301,11 @@ int main()
                     }
                     
                     time(&inicio);
-                    while ( (mRecebido.Inicio != INITMSG) || ( (mRecebido.Tipo != 0xc && mRecebido.Tipo != NACK) || (int)mRecebido.Sequencia != Sequencia) )
+                    while ( (recebida.Inicio != INITMSG) || ( (recebida.Tipo != 0xc && recebida.Tipo != NACK) || (int)recebida.Sequencia != Sequencia) )
                     {
-                        mRecebido = receiveMsg(Socket, mRecebido);
-                        time(&fim);
-                        if (difftime(fim, inicio) > 1)
+                        recebida = receiveMsg(Socket, recebida);
+                        time(&limite);
+                        if (difftime(limite, inicio) > 1)
                         {
                             timeOut = 1;
                             break;
@@ -371,34 +313,29 @@ int main()
                     } 
                     if (timeOut == 1)
                             break;
-                    //caso nack
-                    if(mRecebido.Tipo == 0x9)
-                    {
-                        mRecebido = trataNACK(Socket, Sequencia, mRecebido, mEnviado);
+                    
+                    if(recebida.Tipo == 0x9){
+                        recebida = ttNACK(Socket, Sequencia, recebida, enviada);
                     }
                     
-                    if(mRecebido.Tipo == 0xc)
-                    {
-                        if(!checkParity(mRecebido))
-                        {
-                            enviaNACK(Cliente, Servidor, Socket, Sequencia, mRecebido, mEnviado);
+                    if(recebida.Tipo == 0xc){
+                        if(!checkParity(recebida)){
+                            sendNACK(Cliente, Servidor, Socket, Sequencia, recebida, enviada);
                         }
                         Sequencia++;
-                        enviaACK(Cliente, Servidor, Socket, Sequencia, 0x8, mRecebido, mEnviado);
+                        sendACK(Cliente, Servidor, Socket, Sequencia, 0x8, recebida, enviada);
                     }
                     
 
-                    while(mRecebido.Tipo != 0xd)
-                    {
-                        mRecebido.Inicio = 0;
-                        mEnviado.Inicio = 0;
+                    while(recebida.Tipo != 0xd){
+                        recebida.Inicio = 0;
+                        enviada.Inicio = 0;
 
                         time(&inicio);
-                        while ( (mRecebido.Inicio != INITMSG) || ( (mRecebido.Tipo != 0xc && mRecebido.Tipo != 0xd && mRecebido.Tipo != NACK) ||(int) mRecebido.Sequencia != Sequencia))
-                        {
-                            mRecebido = receiveMsg(Socket, mRecebido);
-                            time(&fim);
-                            if (difftime(fim, inicio) > 1)
+                        while ( (recebida.Inicio != INITMSG) || ( (recebida.Tipo != 0xc && recebida.Tipo != 0xd && recebida.Tipo != NACK) ||(int) recebida.Sequencia != Sequencia)) {
+                            recebida = receiveMsg(Socket, recebida);
+                            time(&limite);
+                            if (difftime(limite, inicio) > 1)
                             {   
                                 timeOut = 1;
                                 break;
@@ -409,40 +346,34 @@ int main()
                             break;
                         
                         Sequencia++;
-                        if (Sequencia == 256)
-                        {
+                        if (Sequencia == 256){
                             Sequencia = 0;
                             multSeq++;
                         }
-                        if(mRecebido.Tipo == NACK)
-                        {
-                            mRecebido = trataNACK(Socket, Sequencia, mRecebido, mEnviado);
+                        if(recebida.Tipo == NACK){
+                            recebida = ttNACK(Socket, Sequencia, recebida, enviada);
                         }
-                        if (mRecebido.Tipo == 0xc)
-                        {
-                            if (!checkParity(mRecebido))
-                                enviaNACK(Cliente, Servidor, Socket, Sequencia, mRecebido, mEnviado);
-                            enviaACK(Cliente, Servidor, Socket, Sequencia, 0x8, mRecebido, mEnviado);
+                        if (recebida.Tipo == 0xc){
+                            if (!checkParity(recebida))
+                                sendNACK(Cliente, Servidor, Socket, Sequencia, recebida, enviada);
+                            sendACK(Cliente, Servidor, Socket, Sequencia, 0x8, recebida, enviada);
                         }
-                        
-                        for (int i = 0; i < (int)mRecebido.Tamanho; i++)
-                            printf("%c",mRecebido.Dados[i]);
+                        for (int i = 0; i < (int)recebida.Tamanho; i++)
+                            printf("%c",recebida.Dados[i]);
                     }
                     printf("\n");   
                     break;
 
-//----------------LINHAS---------------------------------------------------------------------------------------------------------------------------
-                case 0x6:
-                    mRecebido.Inicio = 0;
-                    mEnviado.Inicio = 0;
+                case 0x6: //linhas
+                    recebida.Inicio = 0;
+                    enviada.Inicio = 0;
                     
                     time(&inicio);
-                    while ( (mRecebido.Inicio != INITMSG) || ( (mRecebido.Tipo != ACK && mRecebido.Tipo != NACK && mRecebido.Tipo != 0xF) || (int)mRecebido.Sequencia != Sequencia) )
+                    while (((recebida.Tipo != ACK && recebida.Tipo != NACK && recebida.Tipo != 0xF) || (int)recebida.Sequencia != Sequencia) || (recebida.Inicio != INITMSG))
                     {
-                        mRecebido = receiveMsg(Socket, mRecebido);
-                        time(&fim);
-                        if (difftime(fim, inicio) > 1)
-                        {
+                        recebida = receiveMsg(Socket, recebida);
+                        time(&limite);
+                        if (difftime(limite, inicio) > 1){
                             timeOut = 1;
                             break;
                         }
@@ -451,81 +382,64 @@ int main()
                     if (timeOut == 1)
                         break;
 
-                    //caso nack
-                    if(mRecebido.Tipo == 0x9)
-                    {
-                        mRecebido = trataNACK(Socket, Sequencia, mRecebido, mEnviado);
+                    if(recebida.Tipo == 0x9) {
+                        recebida = ttNACK(Socket, Sequencia, recebida, enviada);
                     }
                     
-                    if(mRecebido.Tipo == ACK)
-                    {
+                    if(recebida.Tipo == ACK) {
                         Sequencia++;
-                        strcat(Parametro1, "\n");  
-                        strcat(Parametro1, Parametro2);
-                        
- 
-                        mEnviado = newMsg(Cliente, Servidor, Parametro1, 0xa, Sequencia);
-                        sendMsg(Socket, mEnviado);
+                        strcat(param1, "\n");  
+                        strcat(param1, param2);
+                        enviada = newMsg(Cliente, Servidor, param1, 0xa, Sequencia);
+                        sendMsg(Socket, enviada);
                     }
-                    if(mRecebido.Tipo == 0xF)
-                    {  
-                        if (mRecebido.Dados[0] == '3')
-                            printf("Erro arquivo inexistente");
+                    if(recebida.Tipo == 0xF) {  
+                        if (recebida.Dados[0] == '3')
+                            printf("Arquivo inexistente");
                         error = 1;
                     }
 
-                    if (error == 1)
-                    {    
+                    if (error == 1){    
                         printf("\n");
                         break;
                     }
 
                     time(&inicio);
-                    while ( (mRecebido.Inicio != INITMSG) || ( (mRecebido.Tipo != 0xc && mRecebido.Tipo != NACK) || (int)mRecebido.Sequencia != Sequencia) )
-                    {
-                        mRecebido = receiveMsg(Socket, mRecebido);
-                        time(&fim);
-                        if (difftime(fim, inicio) > 1)
+                    while (((recebida.Tipo != 0xc && recebida.Tipo != NACK) || (int)recebida.Sequencia != Sequencia) || (recebida.Inicio != INITMSG) ){
+                        recebida = receiveMsg(Socket, recebida);
+                        time(&limite);
+                        if (difftime(limite, inicio) > 1)
                         {
                             timeOut = 1;
                             break;
                         }
                     } 
-        
                     if (timeOut == 1)
                         break;
-
-                    //caso nack
-                    if(mRecebido.Tipo == 0x9)
-                    {
-                        mRecebido = trataNACK(Socket, Sequencia, mRecebido, mEnviado);
+                    if(recebida.Tipo == 0x9){
+                        recebida = ttNACK(Socket, Sequencia, recebida, enviada);
                     }
                     
-                    if(mRecebido.Tipo == 0xc)
-                    {
-                        if(!checkParity(mRecebido))
+                    if(recebida.Tipo == 0xc) {
+                        if(!checkParity(recebida))
                         {
-                            enviaNACK(Cliente, Servidor, Socket, Sequencia, mRecebido, mEnviado);
+                            sendNACK(Cliente, Servidor, Socket, Sequencia, recebida, enviada);
                         }
 
                         Sequencia++;
 
-                        enviaACK(Cliente, Servidor, Socket, Sequencia, 0x8, mRecebido, mEnviado);
+                        sendACK(Cliente, Servidor, Socket, Sequencia, 0x8, recebida, enviada);
                     }
-                    
-
-                    while(mRecebido.Tipo != 0xd)
-                    {
-                        mRecebido.Inicio = 0;
-                        mEnviado.Inicio = 0;
+    
+                    while(recebida.Tipo != 0xd) {
+                        recebida.Inicio = 0;
+                        enviada.Inicio = 0;
 
                         time(&inicio);
-                        while ( (mRecebido.Inicio != INITMSG) || ( (mRecebido.Tipo != 0xc && mRecebido.Tipo != 0xd && mRecebido.Tipo != NACK) ||(int) mRecebido.Sequencia != Sequencia))
-                        {
-                            mRecebido = receiveMsg(Socket, mRecebido);
-                            time(&fim);
-                            if (difftime(fim, inicio) > 1)
-                            {
+                        while (((recebida.Tipo != 0xc && recebida.Tipo != 0xd && recebida.Tipo != NACK) ||(int) recebida.Sequencia != Sequencia) || (recebida.Inicio != INITMSG))   {
+                            recebida = receiveMsg(Socket, recebida);
+                            time(&limite);
+                            if (difftime(limite, inicio) > 1)  {
                                 timeOut = 1;
                                 break;
                             }
@@ -535,42 +449,37 @@ int main()
                             break;
                         
                         Sequencia++;
-                        if (Sequencia == 256)
-                        {
+                        if (Sequencia == 256) {
                             Sequencia = 0;
                             multSeq++;
                         }
-                        if(mRecebido.Tipo == NACK)
-                        {
-                            mRecebido = trataNACK(Socket, Sequencia, mRecebido, mEnviado);
+                        if(recebida.Tipo == NACK) {
+                            recebida = ttNACK(Socket, Sequencia, recebida, enviada);
                         }
-                        if (mRecebido.Tipo == 0xc)
-                        {
-                            if (!checkParity(mRecebido))
-                                enviaNACK(Cliente, Servidor, Socket, Sequencia, mRecebido, mEnviado);
-                            enviaACK(Cliente, Servidor, Socket, Sequencia, 0x8, mRecebido, mEnviado);
+                        if (recebida.Tipo == 0xc) {
+                            if (!checkParity(recebida))
+                                sendNACK(Cliente, Servidor, Socket, Sequencia, recebida, enviada);
+                            sendACK(Cliente, Servidor, Socket, Sequencia, 0x8, recebida, enviada);
                         }
                         
-                        for (int i = 0; i < (int)mRecebido.Tamanho; i++)
-                            printf("%c",mRecebido.Dados[i]);
+                        for (int i = 0; i < (int)recebida.Tamanho; i++)
+                            printf("%c",recebida.Dados[i]);
                     }
                     printf("\n");   
 
                     break;
 
-//----------------EDIT-----------------------------------------------------------------------------------------------------------------------------
-                case 0x7:
+                case 0x7: //edit
                     
-                    mRecebido.Inicio = 0;
-                    mEnviado.Inicio = 0;
+                    recebida.Inicio = 0;
+                    enviada.Inicio = 0;
                     
                     time(&inicio);
-                    while ( (mRecebido.Inicio != INITMSG) || ( (mRecebido.Tipo != ACK && mRecebido.Tipo != NACK && mRecebido.Tipo != 0xF) || (int)mRecebido.Sequencia != Sequencia) )
+                    while (((recebida.Tipo != ACK && recebida.Tipo != NACK && recebida.Tipo != 0xF) || (int)recebida.Sequencia != Sequencia) || (recebida.Inicio != INITMSG))
                     {
-                        mRecebido = receiveMsg(Socket, mRecebido);
-                        time(&fim);
-                        if (difftime(fim, inicio) > 1)
-                        {
+                        recebida = receiveMsg(Socket, recebida);
+                        time(&limite);
+                        if (difftime(limite, inicio) > 1) {
                             timeOut = 1;
                             break;
                         }
@@ -579,39 +488,34 @@ int main()
                     if (timeOut == 1)
                         break;
                     
-                    //caso nack
-                    if(mRecebido.Tipo == 0x9)
-                    {
-                        mRecebido = trataNACK(Socket, Sequencia, mRecebido, mEnviado);
+                    
+                    if(recebida.Tipo == 0x9) {
+                        recebida = ttNACK(Socket, Sequencia, recebida, enviada);
                     }
                     
-                    if(mRecebido.Tipo == ACK)
-                    {
+                    if(recebida.Tipo == ACK) {
                         Sequencia++;
-                        mEnviado = newMsg(Cliente, Servidor, Parametro1, 0xa, Sequencia);
-                        sendMsg(Socket, mEnviado);
+                        enviada = newMsg(Cliente, Servidor, param1, 0xa, Sequencia);
+                        sendMsg(Socket, enviada);
                     }
 
-                    if(mRecebido.Tipo == 0xF)
-                    {  
-                        if (mRecebido.Dados[0] == '3')
-                            printf("Erro arquivo inexistente");
+                    if(recebida.Tipo == 0xF) {  
+                        if (recebida.Dados[0] == '3')
+                            printf("Arquivo inexistente");
                         error = 1;
                     }
 
-                    if (error == 1)
-                    {    
+                    if (error == 1) {    
                         printf("\n");
                         break;
                     }
                     
                     time(&inicio);
-                    while ( (mRecebido.Inicio != INITMSG) || ( (mRecebido.Tipo != ACK && mRecebido.Tipo != NACK && mRecebido.Tipo != 0xF) || (int)mRecebido.Sequencia != Sequencia) )
+                    while (((recebida.Tipo != ACK && recebida.Tipo != NACK && recebida.Tipo != 0xF) || (int)recebida.Sequencia != Sequencia) || (recebida.Inicio != INITMSG))
                     {
-                        mRecebido = receiveMsg(Socket, mRecebido);
-                        time(&fim);
-                        if (difftime(fim, inicio) > 1)
-                        {
+                        recebida = receiveMsg(Socket, recebida);
+                        time(&limite);
+                        if (difftime(limite, inicio) > 1) {
                             timeOut = 1;
                             break;
                         }
@@ -621,51 +525,41 @@ int main()
                         break;
 
 
-                    if(mRecebido.Tipo == 0xF)
-                    {  
-                        if (mRecebido.Dados[0] == '4')
-                            printf("Erro linha inexistente");
+                    if(recebida.Tipo == 0xF) {  
+                        if (recebida.Dados[0] == '4')
+                            printf("Linha inexistente");
                         error = 1;
                     }
 
-                    if (error == 1)
-                    {    
+                    if (error == 1) {    
                         printf("\n");
                         break;
                     }
-
-                    //caso nack
-                    if(mRecebido.Tipo == NACK)
-                    {
-                        mRecebido = trataNACK(Socket, Sequencia, mRecebido, mEnviado);
+ 
+                    if(recebida.Tipo == NACK) {
+                        recebida = ttNACK(Socket, Sequencia, recebida, enviada);
                     }
                     
-                    if(mRecebido.Tipo == ACK)
-                    {
-                        if(!checkParity(mRecebido))
-                        {
-                            enviaNACK(Cliente, Servidor, Socket, Sequencia, mRecebido, mEnviado);
+                    if(recebida.Tipo == ACK) {
+                        if(!checkParity(recebida)) {
+                            sendNACK(Cliente, Servidor, Socket, Sequencia, recebida, enviada);
                         }
                         Sequencia++;
-                        enviaACK(Cliente, Servidor, Socket, Sequencia, 0xc, mRecebido, mEnviado);
-
+                        sendACK(Cliente, Servidor, Socket, Sequencia, 0xc, recebida, enviada); 
                     }
                     
-                    tam = strlen(Parametro3);
+                    tam = strlen(param3);
                     local = 0;
 
-                    while(tam > local)
-                    {
-                        mRecebido.Inicio = 0;
-                        mEnviado.Inicio = 0;
+                    while(tam > local) {
+                        recebida.Inicio = 0;
+                        enviada.Inicio = 0;
 
                         time(&inicio);
-                        while ( (mRecebido.Inicio != INITMSG) || ( (mRecebido.Tipo != ACK && mRecebido.Tipo != NACK) || (int)mRecebido.Sequencia != Sequencia) )
-                        {
-                            mRecebido = receiveMsg(Socket, mRecebido);
-                            time(&fim);
-                            if (difftime(fim, inicio) > 1)
-                            {
+                        while (((recebida.Tipo != ACK && recebida.Tipo != NACK) || (int)recebida.Sequencia != Sequencia) || (recebida.Inicio != INITMSG))  {
+                            recebida = receiveMsg(Socket, recebida);
+                            time(&limite);
+                            if (difftime(limite, inicio) > 1)  {
                                 timeOut = 1;
                                 break;
                             }
@@ -674,24 +568,21 @@ int main()
                         if (timeOut == 1)
                             break;
                         
-                        if (mRecebido.Tipo == 0x9)
-                            mRecebido = trataNACK(Socket, Sequencia, mRecebido, mEnviado);
+                        if (recebida.Tipo == 0x9)
+                            recebida = ttNACK(Socket, Sequencia, recebida, enviada);
                         
-                        if (mRecebido.Tipo == 0x8)
-                        {
-                            strbcut(Parametro3, DadosEnviado, local, tam);
+                        if (recebida.Tipo == 0x8) {
+                            strbcut(param3, dadosEnviados, local, tam);
                             Sequencia++;
-                            if (Sequencia == 256)
-                            {
+                            if (Sequencia == 256) {
                                 Sequencia = 0;
                                 multSeq++;
                             }
-                            mEnviado = newMsg(Cliente, Servidor, DadosEnviado, 0xc, Sequencia);
-                            sendMsg(Socket, mEnviado);
+                            enviada = newMsg(Cliente, Servidor, dadosEnviados, 0xc, Sequencia);
+                            sendMsg(Socket, enviada);
                             
-                            local += 15;
-                        }
-                    
+                            local += TAM_MSG;
+                        } 
                         if (timeOut == 1)
                             break;
                     }
@@ -700,12 +591,10 @@ int main()
                         break;
 
                     time(&inicio);
-                    while ( (mRecebido.Inicio != INITMSG) || ( (mRecebido.Tipo != ACK && mRecebido.Tipo != NACK) || (int)mRecebido.Sequencia != Sequencia) )
-                    {
-                        mRecebido = receiveMsg(Socket, mRecebido);
-                        time(&fim);
-                        if (difftime(fim, inicio) > 1)
-                        {
+                    while (((recebida.Tipo != ACK && recebida.Tipo != NACK) || (int)recebida.Sequencia != Sequencia) ) || (recebida.Inicio != INITMSG)  {
+                        recebida = receiveMsg(Socket, recebida);
+                        time(&limite);
+                        if (difftime(limite, inicio) > 1) {
                             timeOut = 1;
                             break;
                         }
@@ -713,39 +602,32 @@ int main()
                     if (timeOut == 1)
                         break;
 
-                    if (mRecebido.Tipo == 0x9)
-                        mRecebido = trataNACK(Socket, Sequencia, mRecebido, mEnviado);
+                    if (recebida.Tipo == 0x9)
+                        recebida = ttNACK(Socket, Sequencia, recebida, enviada);
                     
-                    if (mRecebido.Tipo == 0x8)
-                    {    
+                    if (recebida.Tipo == 0x8) {    
                         Sequencia++;
-                        if (Sequencia == 256)
-                        {
+                        if (Sequencia == 256) {
                             Sequencia = 0;
                             multSeq++;
                         }
-                        enviaACK(Cliente, Servidor, Socket, Sequencia, 0xd, mRecebido, mEnviado);
+                        sendACK(Cliente, Servidor, Socket, Sequencia, 0xd, recebida, enviada);
                     }
                     break;
-                
-                
-                
-//----------------L-CHANGE-DIRECTORY----------------------------------------------------------------------------------------------------------------
-                case 0x1:
-                    lcd(Parametro1);
+                           
+                case 0x1: //lcd
+                    lcd(param1);
                     printf("\n");
                     break;
-//----------------L-LIST---------------------------------------------------------------------------------------------------------------------------- 
-                case 0x3:
+
+                case 0x3: //lls
                     local = 0;
-                    DadosEnviado = lls(local, &tamanhoLS);
-                    while (tamanhoLS - 1 > local)
-                    {
-                        DadosEnviado = lls(local, &tamanhoLS);
-                        for (int i = 0; i < strlen(DadosEnviado); i++)
-                        {
-                            if (DadosEnviado[i] != '\n')
-                                printf("%c", DadosEnviado[i]);
+                    dadosEnviados = lls(local, &sizeParam);
+                    while (sizeParam - 1 > local)  {
+                        dadosEnviados = lls(local, &sizeParam);
+                        for (int i = 0; i < strlen(dadosEnviados); i++) {
+                            if (dadosEnviados[i] != '\n')
+                                printf("%c", dadosEnviados[i]);
                             else
                                 printf(" ");
                         }
@@ -754,7 +636,7 @@ int main()
                     printf("\n");
                     break;
                 default:
-                    printf("Comando Errado\n");
+                    printf("Comando inexistente\n");
                     break;
             }
         }    
@@ -763,21 +645,20 @@ int main()
         local = 0;
         multSeq = 0;
         Sequencia = 0;
-        tamanhoLS = 0;
+        sizeParam = 0;
         error = 0;
-        mEnviado.Inicio = 0;
-        mRecebido.Inicio = 0;
+        enviada.Inicio = 0;
+        recebida.Inicio = 0;
         if (timeOut == 1)
-            printf("Timeout\n");
+            printf("TIMEOUT!\n");
         timeOut = 0;  
-        strcpy(CMDUSER, "");
-        strcpy(Comando, "");
-        strcpy(Parametro1, "");
-        strcpy(Parametro2, "");        
-        strcpy(Parametro3, "");
-        strcpy(DadosEnviado, "");
+        strcpy(CMDCLIENT, "");
+        strcpy(cmd_, "");
+        strcpy(param1, "");
+        strcpy(param2, "");        
+        strcpy(param3, "");
+        strcpy(dadosEnviados, "");
     }
-
     return 0;
 }
 
