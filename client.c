@@ -71,7 +71,7 @@ int main()
         }
         else 
         {
-            mEnviado = newMsg(DadosEnviado, Tipo, 0x0);
+            mEnviado = newMsg(Cliente, Servidor, DadosEnviado, Tipo, 0x0);
             if(mEnviado.Tipo != 0x1 && mEnviado.Tipo != 0x3)
                 sendMsg(Socket, mEnviado);
             
@@ -120,7 +120,7 @@ int main()
                     
                     break;
 
-//-//--------------LIST---------------------------------------------------------------------------------------------------------------------------- 
+//----------------LIST---------------------------------------------------------------------------------------------------------------------------- 
                 case 0x2:
                     
                     mRecebido.Inicio = 0;
@@ -151,7 +151,7 @@ int main()
                     {
                         if(!checkParity(mRecebido))
                         {
-                            enviaNACK(Socket, Sequencia, mRecebido, mEnviado);
+                            enviaNACK(Cliente, Servidor, Socket, Sequencia, mRecebido, mEnviado);
                         }
                         Sequencia++;
                         enviaACK(Socket, Sequencia, 0x8, mRecebido, mEnviado);
@@ -202,7 +202,7 @@ int main()
                         if (mRecebido.Tipo == 0xb)
                         {
                             if (!checkParity(mRecebido))
-                                enviaNACK(Socket, Sequencia, mRecebido, mEnviado);
+                                enviaNACK(Cliente, Servidor, Socket, Sequencia, mRecebido, mEnviado);
                             enviaACK(Socket, Sequencia, 0x8, mRecebido, mEnviado);
                         }
                         
@@ -221,7 +221,7 @@ int main()
 
                     break;
 
-//-//--------------VER-----------------------------------------------------------------------------------------------------------------------------
+//----------------VER-----------------------------------------------------------------------------------------------------------------------------
                 case 0x4:
                     mRecebido.Inicio = 0;
                     mEnviado.Inicio = 0;
@@ -251,7 +251,7 @@ int main()
                     {
                         if(!checkParity(mRecebido))
                         {
-                            enviaNACK(Socket, Sequencia, mRecebido, mEnviado);
+                            enviaNACK(Cliente, Servidor, Socket, Sequencia, mRecebido, mEnviado);
                         }
                         Sequencia++;
                         enviaACK(Socket, Sequencia, 0x8, mRecebido, mEnviado);
@@ -303,7 +303,7 @@ int main()
                         if (mRecebido.Tipo == 0xc)
                         {
                             if (!checkParity(mRecebido))
-                                enviaNACK(Socket, Sequencia, mRecebido, mEnviado);
+                                enviaNACK(Cliente, Servidor, Socket, Sequencia, mRecebido, mEnviado);
                             enviaACK(Socket, Sequencia, 0x8, mRecebido, mEnviado);
                         }
                         
@@ -313,7 +313,7 @@ int main()
                     printf("\n");
                     break;
 
-//-//--------------LINHA----------------------------------------------------------------------------------------------------------------------------
+//----------------LINHA----------------------------------------------------------------------------------------------------------------------------
                 case 0x5:
                     mRecebido.Inicio = 0;
                     mEnviado.Inicio = 0;
@@ -342,7 +342,7 @@ int main()
                     if(mRecebido.Tipo == ACK)
                     {
                         Sequencia++;
-                        mEnviado = newMsg(Parametro1, 0xa, Sequencia);
+                        mEnviado = newMsg(Cliente, Servidor, Parametro1, 0xa, Sequencia);
                         sendMsg(Socket, mEnviado);
                     }
                     if(mRecebido.Tipo == 0xF)
@@ -381,7 +381,7 @@ int main()
                     {
                         if(!checkParity(mRecebido))
                         {
-                            enviaNACK(Socket, Sequencia, mRecebido, mEnviado);
+                            enviaNACK(Cliente, Servidor, Socket, Sequencia, mRecebido, mEnviado);
                         }
                         Sequencia++;
                         enviaACK(Socket, Sequencia, 0x8, mRecebido, mEnviado);
@@ -421,7 +421,7 @@ int main()
                         if (mRecebido.Tipo == 0xc)
                         {
                             if (!checkParity(mRecebido))
-                                enviaNACK(Socket, Sequencia, mRecebido, mEnviado);
+                                enviaNACK(Cliente, Servidor, Socket, Sequencia, mRecebido, mEnviado);
                             enviaACK(Socket, Sequencia, 0x8, mRecebido, mEnviado);
                         }
                         
@@ -431,7 +431,7 @@ int main()
                     printf("\n");   
                     break;
 
-//-//--------------LINHAS---------------------------------------------------------------------------------------------------------------------------
+//----------------LINHAS---------------------------------------------------------------------------------------------------------------------------
                 case 0x6:
                     mRecebido.Inicio = 0;
                     mEnviado.Inicio = 0;
@@ -464,7 +464,7 @@ int main()
                         strcat(Parametro1, Parametro2);
                         
  
-                        mEnviado = newMsg(Parametro1, 0xa, Sequencia);
+                        mEnviado = newMsg(Cliente, Servidor, Parametro1, 0xa, Sequencia);
                         sendMsg(Socket, mEnviado);
                     }
                     if(mRecebido.Tipo == 0xF)
@@ -505,7 +505,7 @@ int main()
                     {
                         if(!checkParity(mRecebido))
                         {
-                            enviaNACK(Socket, Sequencia, mRecebido, mEnviado);
+                            enviaNACK(Cliente, Servidor, Socket, Sequencia, mRecebido, mEnviado);
                         }
 
                         Sequencia++;
@@ -547,7 +547,7 @@ int main()
                         if (mRecebido.Tipo == 0xc)
                         {
                             if (!checkParity(mRecebido))
-                                enviaNACK(Socket, Sequencia, mRecebido, mEnviado);
+                                enviaNACK(Cliente, Servidor, Socket, Sequencia, mRecebido, mEnviado);
                             enviaACK(Socket, Sequencia, 0x8, mRecebido, mEnviado);
                         }
                         
@@ -558,7 +558,7 @@ int main()
 
                     break;
 
-//-//--------------EDIT-----------------------------------------------------------------------------------------------------------------------------
+//----------------EDIT-----------------------------------------------------------------------------------------------------------------------------
                 case 0x7:
                     
                     mRecebido.Inicio = 0;
@@ -588,7 +588,7 @@ int main()
                     if(mRecebido.Tipo == ACK)
                     {
                         Sequencia++;
-                        mEnviado = newMsg(Parametro1, 0xa, Sequencia);
+                        mEnviado = newMsg(Cliente, Servidor, Parametro1, 0xa, Sequencia);
                         sendMsg(Socket, mEnviado);
                     }
 
@@ -644,7 +644,7 @@ int main()
                     {
                         if(!checkParity(mRecebido))
                         {
-                            enviaNACK(Socket, Sequencia, mRecebido, mEnviado);
+                            enviaNACK(Cliente, Servidor, Socket, Sequencia, mRecebido, mEnviado);
                         }
                         Sequencia++;
                         enviaACK(Socket, Sequencia, 0xc, mRecebido, mEnviado);
@@ -686,7 +686,7 @@ int main()
                                 Sequencia = 0;
                                 multSeq++;
                             }
-                            mEnviado = newMsg(DadosEnviado, 0xc, Sequencia);
+                            mEnviado = newMsg(Cliente, Servidor, DadosEnviado, 0xc, Sequencia);
                             sendMsg(Socket, mEnviado);
                             
                             local += 15;
@@ -730,12 +730,12 @@ int main()
                 
                 
                 
-//-//--------------L-CHANGE-DIRECTORY----------------------------------------------------------------------------------------------------------------
+//----------------L-CHANGE-DIRECTORY----------------------------------------------------------------------------------------------------------------
                 case 0x1:
                     lcd(Parametro1);
                     printf("\n");
                     break;
-//-//--------------L-LIST---------------------------------------------------------------------------------------------------------------------------- 
+//----------------L-LIST---------------------------------------------------------------------------------------------------------------------------- 
                 case 0x3:
                     local = 0;
                     DadosEnviado = lls(local, &tamanhoLS);

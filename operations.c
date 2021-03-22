@@ -15,6 +15,48 @@
 #include <linux/if_packet.h>
 #include <stdbool.h>
 
+int rawSocket()
+{
+  int socket;
+  struct ifreq ir;
+  struct sockaddr_ll endereco;
+  struct packet_mreq mr;
+
+  socket = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));  	/*cria socket*/
+  if (socket == -1) {
+    printf("Erro no Socket\n");
+    exit(-1);
+  }
+
+  memset(&ir, 0, sizeof(struct ifreq));  	/*dispositivo lo*/
+  memcpy(ir.ifr_name, "lo", sizeof("lo"));
+  if (ioctl(socket, SIOCGIFINDEX, &ir) == -1) {
+    printf("Erro no ioctl\n");
+    exit(-1);
+  }
+	
+
+  memset(&endereco, 0, sizeof(endereco)); 	/*IP do dispositivo*/
+  endereco.sll_family = AF_PACKET;
+  endereco.sll_protocol = htons(ETH_P_ALL);
+  endereco.sll_ifindex = ir.ifr_ifindex;
+  if (bind(socket, (struct sockaddr *)&endereco, sizeof(endereco)) == -1) {
+    printf("Erro no bind\n");
+    exit(-1);
+  }
+
+
+  memset(&mr, 0, sizeof(mr));          /*Modo Promiscuo*/
+  mr.mr_ifindex = ir.ifr_ifindex;
+  mr.mr_type = PACKET_MR_PROMISC;
+  if (setsockopt(socket, SOL_PACKET, PACKET_ADD_MEMBERSHIP, &mr, sizeof(mr)) == -1)	{
+    printf("Erro ao fazer setsockopt\n");
+    exit(-1);
+  }
+ 
+  return socket;
+}
+
 char* initPort(int tam)
 {
     char *porta;
@@ -26,6 +68,68 @@ char* initPort(int tam)
     else               
         porta = malloc(tam * sizeof(char));
     return porta;
+}
+
+int defineTipo(char* Comando, char* Dados, char* Parametro1, char* Parametro2, char* Parametro3)
+{
+    int tipo;
+
+    if (!strcmp(Comando, "cd"))
+    {
+        tipo = 0x0;
+        strcpy(Dados, Parametro1);
+    }
+    else if (!strcmp(Comando, "lcd"))
+    {
+        tipo = 0x1;
+        strcpy(Dados, Parametro1);
+    }
+     if (!strcmp(Comando, "ls"))
+    {
+        tipo = 0x2;
+        Dados = NULL;
+    }
+    else if (!strcmp(Comando, "lls"))
+    {
+        tipo = 0x3;
+        Dados = NULL;
+    }                
+    else if (!strcmp(Comando, "ver"))
+    {
+        tipo = 0x4;
+        strcpy(Dados, Parametro1);    
+    }    
+    else if (!strcmp(Comando, "linha"))
+    {   
+        tipo = 0x5;
+        strcpy(Dados, Parametro2);
+    }    
+    else if (!strcmp(Comando, "linhas"))
+    {   
+        tipo = 0x6;
+        strcpy(Dados, Parametro3);
+    }
+    else if (!strcmp(Comando, "edit"))
+    {
+        tipo = 0x7;
+        strcpy(Dados, Parametro2);
+    }
+    else if (!strcmp(Comando, "ack"))
+    {
+        tipo = 0x8;
+        Dados = NULL;
+    }    
+    else if (!strcmp(Comando, "nack"))
+    {
+        tipo = 0x9;
+        Dados = NULL;
+    }
+    else if (!strcmp(Comando, "err"))
+    {
+        tipo = 0xF;
+        Dados = NULL;
+    }
+    return tipo;
 }
 
 void cd(short int *error, char *diretorio)
@@ -203,7 +307,7 @@ Mensagem receiveMsg(int socket, Mensagem ultMensagem)
     }    
     else 
     {
-        if ((m.Inicio == INITMSG) && !(cmpmsg(m, ultMensagem)) )
+        if ((m.Inicio == INITMSG) && !(comparar(m, ultMensagem)) )
         {
             return(m);
         }
@@ -215,7 +319,7 @@ Mensagem receiveMsg(int socket, Mensagem ultMensagem)
     }
 }
 
-int cmpmsg(Mensagem priMsg, Mensagem ultMsg)
+int comparar(Mensagem priMsg, Mensagem ultMsg)
 {
     int resultado;
     //VERIFICAR ENDEREÇOS AQUI
@@ -283,7 +387,7 @@ Mensagem trataNACK(int Socket, int Sequencia, Mensagem mRecebido, Mensagem mEnvi
     {
         sendMsg(Socket, mEnviado);
     
-        while ((mRecebido.Inicio == 0) || cmpmsg(mRecebido, mEnviado))
+        while ((mRecebido.Inicio == 0) || comparar(mRecebido, mEnviado))
         {
             mRecebido = receiveMsg(Socket, mRecebido);
         } 
@@ -295,7 +399,7 @@ Mensagem trataNACK(int Socket, int Sequencia, Mensagem mRecebido, Mensagem mEnvi
     return mRecebido;
 }
 
-void enviaNACK(int Socket, int Sequencia, Mensagem mRecebido, Mensagem mEnviado)
+void enviaNACK(int Origem, int Destino, int Socket, int Sequencia, Mensagem mRecebido, Mensagem mEnviado)
 {        
     
     mRecebido.Inicio = 0;
@@ -303,10 +407,10 @@ void enviaNACK(int Socket, int Sequencia, Mensagem mRecebido, Mensagem mEnviado)
     
     while(!checkParity(mRecebido))
     {
-        mEnviado = newMsg("\0", 0x9, Sequencia);
+        mEnviado = newMsg(Origem, Destino, "\0", 0x9, Sequencia);
         sendMsg(Socket, mEnviado);    
 
-        while ((mRecebido.Inicio == 0) || cmpmsg(mRecebido, mEnviado))
+        while ((mRecebido.Inicio == 0) || comparar(mRecebido, mEnviado))
         {
             mRecebido = receiveMsg(Socket, mRecebido);
         }
@@ -361,67 +465,6 @@ void showLine(short int *error, char *linha, char *arquivo)
     fclose(arq);
 }
 
-int defineTipo(char* Comando, char* Dados, char* Parametro1, char* Parametro2, char* Parametro3)
-{
-    int tipo;
-
-    if (!strcmp(Comando, "cd"))
-    {
-        tipo = 0x0;
-        strcpy(Dados, Parametro1);
-    }
-    else if (!strcmp(Comando, "lcd"))
-    {
-        tipo = 0x1;
-        strcpy(Dados, Parametro1);
-    }
-     if (!strcmp(Comando, "ls"))
-    {
-        tipo = 0x2;
-        Dados = NULL;
-    }
-    else if (!strcmp(Comando, "lls"))
-    {
-        tipo = 0x3;
-        Dados = NULL;
-    }                
-    else if (!strcmp(Comando, "ver"))
-    {
-        tipo = 0x4;
-        strcpy(Dados, Parametro1);    
-    }    
-    else if (!strcmp(Comando, "linha"))
-    {   
-        tipo = 0x5;
-        strcpy(Dados, Parametro2);
-    }    
-    else if (!strcmp(Comando, "linhas"))
-    {   
-        tipo = 0x6;
-        strcpy(Dados, Parametro3);
-    }
-    else if (!strcmp(Comando, "edit"))
-    {
-        tipo = 0x7;
-        strcpy(Dados, Parametro2);
-    }
-    else if (!strcmp(Comando, "ack"))
-    {
-        tipo = 0x8;
-        Dados = NULL;
-    }    
-    else if (!strcmp(Comando, "nack"))
-    {
-        tipo = 0x9;
-        Dados = NULL;
-    }
-    else if (!strcmp(Comando, "err"))
-    {
-        tipo = 0xF;
-        Dados = NULL;
-    }
-    return tipo;
-}
 //////ACHAR FUNCAO
 void strcut(char *Cortado, char *Resultado, char* Cortador)
 {
@@ -553,44 +596,3 @@ char* linha(int numeroLinha, char *nomeArquivo, long int *tamLinha, int local)
     return Conteudo;
 }
 
-int rawSocket()
-{
-  int socket;
-  struct ifreq ir;
-  struct sockaddr_ll endereco;
-  struct packet_mreq mr;
-
-  socket = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));  	/*cria socket*/
-  if (socket == -1) {
-    printf("Erro no Socket\n");
-    exit(-1);
-  }
-
-  memset(&ir, 0, sizeof(struct ifreq));  	/*dispositivo lo*/
-  memcpy(ir.ifr_name, "lo", sizeof("lo"));
-  if (ioctl(socket, SIOCGIFINDEX, &ir) == -1) {
-    printf("Erro no ioctl\n");
-    exit(-1);
-  }
-	
-
-  memset(&endereco, 0, sizeof(endereco)); 	/*IP do dispositivo*/
-  endereco.sll_family = AF_PACKET;
-  endereco.sll_protocol = htons(ETH_P_ALL);
-  endereco.sll_ifindex = ir.ifr_ifindex;
-  if (bind(socket, (struct sockaddr *)&endereco, sizeof(endereco)) == -1) {
-    printf("Erro no bind\n");
-    exit(-1);
-  }
-
-
-  memset(&mr, 0, sizeof(mr));          /*Modo Promiscuo*/
-  mr.mr_ifindex = ir.ifr_ifindex;
-  mr.mr_type = PACKET_MR_PROMISC;
-  if (setsockopt(socket, SOL_PACKET, PACKET_ADD_MEMBERSHIP, &mr, sizeof(mr)) == -1)	{
-    printf("Erro ao fazer setsockopt\n");
-    exit(-1);
-  }
- 
-  return socket;
-}

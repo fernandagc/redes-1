@@ -53,7 +53,7 @@ int main()
         
 
         if (!checkParity(mRecebido) && timeOut == 0)
-            enviaNACK(Socket, Sequencia, mRecebido, mEnviado);                
+            enviaNACK(Servidor, Cliente, Socket, Sequencia, mRecebido, mEnviado);                
             
         switch (mRecebido.Tipo)
         {
@@ -69,14 +69,14 @@ int main()
                 }
                 else
                 {
-                    enviaERR(Socket, Sequencia, 0xF, error, mEnviado); //envia erro
+                    enviaERR(Socket, Sequencia, 0xF, error, mEnviado); 
                     break;
                 }
                 
                 lcd(Parametro1);
                 break;        
                     
-//-//--------------LIST----------------------------------------------------------------------------------------------------------------------------
+//----------------LIST----------------------------------------------------------------------------------------------------------------------------
             case 0x2: 
                 ls(&error);
 
@@ -87,7 +87,7 @@ int main()
                 }
                 else
                 {
-                    enviaERR(Socket, Sequencia, 0xF, error, mEnviado); //envia erro
+                    enviaERR(Socket, Sequencia, 0xF, error, mEnviado); 
                     break;
                 }
                 mRecebido.Inicio = 0;
@@ -105,7 +105,7 @@ int main()
                     }
                 }
                 
-                //sai do switch
+                
                 if (timeOut == 1)
                     break;        
                 
@@ -117,7 +117,7 @@ int main()
                 {
                     Conteudo = list(local, &tam);
                 
-                    mEnviado = newMsg(Conteudo, 0xb, Sequencia);
+                    mEnviado = newMsg(Servidor, Cliente, Conteudo, 0xb, Sequencia);
                     sendMsg(Socket, mEnviado);
                     Sequencia++;
                 }
@@ -139,7 +139,7 @@ int main()
                         }
                     }   
 
-                    //sai do switch
+                    
                     if (timeOut == 1)
                         break;        
                                     
@@ -149,7 +149,7 @@ int main()
                     if(mRecebido.Tipo == ACK)
                     {
                         Conteudo = list(local, &tam);
-                        mEnviado = newMsg(Conteudo, 0xb, Sequencia);
+                        mEnviado = newMsg(Servidor, Cliente, Conteudo, 0xb, Sequencia);
                         sendMsg(Socket, mEnviado);
                         Sequencia++;
                         if (Sequencia == 256)
@@ -166,7 +166,7 @@ int main()
                     }
                 }
 
-                //sai do switch
+                
                 if (timeOut == 1)
                     break;        
                 
@@ -183,7 +183,7 @@ int main()
                     }
                 }   
                 
-                //sai do switch
+                
                 if (timeOut == 1)
                     break;        
                 
@@ -198,7 +198,7 @@ int main()
         
             break;
 
-//-//--------------VER-----------------------------------------------------------------------------------------------------------------------------
+//----------------VER-----------------------------------------------------------------------------------------------------------------------------
             case 0x4:  
                 strcpy(Parametro1, (char *)mRecebido.Dados);
                 
@@ -211,7 +211,7 @@ int main()
                 }
                 else
                 {
-                    enviaERR(Socket, Sequencia, 0xF, error, mEnviado); //envia erro
+                    enviaERR(Socket, Sequencia, 0xF, error, mEnviado); 
                     break;
                 }
 
@@ -230,7 +230,7 @@ int main()
                     }
                 }
 
-                //sai do switch
+                
                 if (timeOut == 1)
                     break;        
             
@@ -241,7 +241,7 @@ int main()
                 {
                     Conteudo = ver(Parametro1, &tam, local);
                     
-                    mEnviado = newMsg(Conteudo, 0xc, Sequencia);
+                    mEnviado = newMsg(Servidor, Cliente, Conteudo, 0xc, Sequencia);
                     
                     sendMsg(Socket, mEnviado);
 
@@ -266,7 +266,7 @@ int main()
                         }
                     }   
             
-                    //sai do switch
+                    
                     if (timeOut == 1)
                         break;
 
@@ -277,7 +277,7 @@ int main()
                     {
                         local += 15;
                         Conteudo = ver(Parametro1, &tam, local);
-                        mEnviado = newMsg(Conteudo, 0xc, Sequencia);
+                        mEnviado = newMsg(Servidor, Cliente, Conteudo, 0xc, Sequencia);
                         sendMsg(Socket, mEnviado);
                         Sequencia++;
                         if (Sequencia == 256)
@@ -288,7 +288,7 @@ int main()
                     }
                 }
                 
-                //sai do switch
+                
                 if (timeOut == 1)
                     break;
                 
@@ -305,7 +305,7 @@ int main()
                     }
                 }   
                 
-                //sai do switch
+                
                 if (timeOut == 1)
                     break;
                 
@@ -318,7 +318,7 @@ int main()
                 }    
                 break;
 
-//-//--------------LINHA----------------------------------------------------------------------------------------------------------------------------
+//----------------LINHA----------------------------------------------------------------------------------------------------------------------------
             case 0x5: 
                 strcpy(Parametro2, (char *)mRecebido.Dados);
                 
@@ -350,7 +350,7 @@ int main()
                     }
                 }
 
-                //sai do switch
+                
                 if (timeOut == 1)
                     break;
                   
@@ -358,12 +358,12 @@ int main()
                 if (mRecebido.Tipo == 0xa)
                 {
                     if (!checkParity(mRecebido))
-                        enviaNACK(Socket, Sequencia, mRecebido, mEnviado);
+                        enviaNACK(Servidor, Cliente, Socket, Sequencia, mRecebido, mEnviado);
 
                     strcpy(Parametro1, (char *)mRecebido.Dados);
                     tamIni = atoi(Parametro1);
 
-                    mEnviado = newMsg(Conteudo, 0xc, Sequencia);                
+                    mEnviado = newMsg(Servidor, Cliente, Conteudo, 0xc, Sequencia);                
     
                     sendMsg(Socket, mEnviado);
                     Sequencia++;             
@@ -390,7 +390,7 @@ int main()
                 if (mRecebido.Tipo == 0x8)
                 {
                     Conteudo = linha(tamIni, Parametro2, &tam, local);
-                    mEnviado = newMsg(Conteudo, 0xc, Sequencia);
+                    mEnviado = newMsg(Servidor, Cliente, Conteudo, 0xc, Sequencia);
                  
                     sendMsg(Socket, mEnviado);
                     Sequencia++;             
@@ -419,7 +419,7 @@ int main()
                     {
                         local += 14;
                         Conteudo = linha(tamIni, Parametro2, &tam, local);
-                        mEnviado = newMsg(Conteudo, 0xc, Sequencia);
+                        mEnviado = newMsg(Servidor, Cliente, Conteudo, 0xc, Sequencia);
 
                         sendMsg(Socket, mEnviado);
                         Sequencia++;
@@ -443,7 +443,7 @@ int main()
                     }
                 }   
                 
-                //sai do switch
+                
                 if (timeOut == 1)
                     break;
                 
@@ -455,7 +455,7 @@ int main()
                     enviaACK(Socket, Sequencia, 0xd, mRecebido, mEnviado);
                 }    
                 break;
-//-//--------------LINHAS---------------------------------------------------------------------------------------------------------------------------
+//-----------------LINHAS---------------------------------------------------------------------------------------------------------------------------
             case 0x6:
                 strcpy(Parametro3, (char *)mRecebido.Dados);
                 
@@ -495,7 +495,7 @@ int main()
                 if (mRecebido.Tipo == 0xa)
                 {
                     if (!checkParity(mRecebido))
-                        enviaNACK(Socket, Sequencia, mRecebido, mEnviado);
+                        enviaNACK(Servidor, Cliente, Socket, Sequencia, mRecebido, mEnviado);
 
                     short int flag = 0;
                     int k = 0;
@@ -519,7 +519,7 @@ int main()
                     }
                     tamIni = atoi(Parametro1);
                     tamFim = atoi(Parametro2);
-                    mEnviado = newMsg(Conteudo, 0xc, Sequencia);           
+                    mEnviado = newMsg(Servidor, Cliente, Conteudo, 0xc, Sequencia);           
                     sendMsg(Socket, mEnviado);
                     Sequencia++;             
                 }    
@@ -550,7 +550,7 @@ int main()
                     if (mRecebido.Tipo == 0x8)
                     {
                         Conteudo = linha(tamIni, Parametro3, &tam, local);
-                        mEnviado = newMsg(Conteudo, 0xc, Sequencia);
+                        mEnviado = newMsg(Servidor, Cliente, Conteudo, 0xc, Sequencia);
                         sendMsg(Socket, mEnviado);
                         Sequencia++;
                         if (Sequencia == 256)
@@ -585,7 +585,7 @@ int main()
                         {
                             local += 14;
                             Conteudo = linha(tamIni, Parametro3, &tam, local);                        
-                            mEnviado = newMsg(Conteudo, 0xc, Sequencia);
+                            mEnviado = newMsg(Servidor, Cliente, Conteudo, 0xc, Sequencia);
                             sendMsg(Socket, mEnviado);
                             Sequencia++;
                             if (Sequencia == 256)
@@ -623,7 +623,7 @@ int main()
                 }
                 break; 
 
-//-//--------------EDIT-----------------------------------------------------------------------------------------------------------------------------
+//------------------------EDIT-----------------------------------------------------------------------------------------------------------------------------
             case 0x7: 
                 tamIni = 0;
                 int tamConteudo = 0;
@@ -638,7 +638,7 @@ int main()
                 }
                 else
                 {
-                    enviaERR(Socket, Sequencia, 0xF, error, mEnviado); //envia erro
+                    enviaERR(Socket, Sequencia, 0xF, error, mEnviado); 
                     break;
                 }
                 
@@ -656,14 +656,14 @@ int main()
                         break;
                     }
                 }
-                //sai do switch
+                
                 if (timeOut == 1)
                     break;
 
                 if (mRecebido.Tipo == 0xa)
                 {
                     if (!checkParity(mRecebido))
-                        enviaNACK(Socket, Sequencia, mRecebido, mEnviado);
+                        enviaNACK(Servidor, Cliente, Socket, Sequencia, mRecebido, mEnviado);
 
                     strcpy(Parametro1, (char *)mRecebido.Dados);
                     
@@ -672,7 +672,7 @@ int main()
                     if (error == 0)
                     {  
                         tamIni = atoi(Parametro1);
-                        mEnviado = newMsg(Conteudo, ACK, Sequencia);                
+                        mEnviado = newMsg(Servidor, Cliente, Conteudo, ACK, Sequencia);                
                         sendMsg(Socket, mEnviado);
                         Sequencia++;             
                     }
@@ -698,7 +698,7 @@ int main()
                             break;
                         }
                     } 
-                    //sai do switch
+                    
                     if (timeOut == 1)
                         break;
                     
@@ -709,7 +709,7 @@ int main()
                     if (mRecebido.Tipo == 0xc)
                     {
                         if (!checkParity(mRecebido))
-                            enviaNACK(Socket, Sequencia, mRecebido, mEnviado);
+                            enviaNACK(Servidor, Cliente, Socket, Sequencia, mRecebido, mEnviado);
                         enviaACK(Socket, Sequencia, 0x8, mRecebido, mEnviado);
                     }
                     
@@ -728,7 +728,7 @@ int main()
                     local += 15;
                 } 
 
-                //sai do switch
+                
                 if (timeOut == 1)
                     break;
 

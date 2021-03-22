@@ -10,7 +10,8 @@
 #define ACK 0x8
 #define NACK 0x9
 #define TAM_MSG 15
-
+#define CLIENTE 10
+#define SERVIDOR 01
 
 typedef struct Mensagem
 {
@@ -40,40 +41,36 @@ char* lls(int index, long int *tamanhoLS);
 
 void ver(short int *error, char *arquivo);
 
-void strcut(char *Cortado, char *Resultado, char* Cortador);
+char* verArquivo(char *nomeArquivo,long int *tamArquivo, int local);
 
-char* strbcut(char *Parametro3, char *Conteudo, int local, int tam);
-
-Mensagem trataNACK(int Soquete, int Sequencia, Mensagem mRecebido, Mensagem mEnviado);
-
-void enviaNACK(int Soquete, int Sequencia, Mensagem mRecebido, Mensagem mEnviado);
-
-void enviaACK(int Soquete, int Sequencia, int Tipo, Mensagem mRecebido, Mensagem mEnviado);
-
-void enviaERR(int Soquete, int Sequencia, int Tipo, short int  error, Mensagem mEnviado);
-
-
-
-void showLine(short int *error, char *linha, char* arquivo);
-
-int cmpmsg(Mensagem priMsg, Mensagem ultMsg);
-
+void edit(int numeroLinha,char *nomeArquivo, char *txt, int tamConteudo);
 
 void sendMsg(int socket, Mensagem m);
 
 Mensagem receiveMsg(int socket, Mensagem ultMensagem);
 
-char* list(int index, long int *tamanhoLS);
+int comparar(Mensagem priMsg, Mensagem ultMsg);
 
+Mensagem newMsg(int Origem, int Destino, char *Dados, int Tipo, int Sequencia);
 
+void enviaACK(int Soquete, int Sequencia, int Tipo, Mensagem mRecebido, Mensagem mEnviado);
 
-char* ver(char *nomeArquivo, long int *tamArquivo, int local);
+void enviaERR(int Soquete, int Sequencia, int Tipo, short int  error, Mensagem mEnviado);
 
-char* linha(int numeroLinha, char *nomeArquivo, long int *tamLinha, int local);
+Mensagem trataNACK(int Soquete, int Sequencia, Mensagem mRecebido, Mensagem mEnviado);
 
-void edit(int numeroLinha,char *nomeArquivo, char *txt, int tamConteudo);
+void enviaNACK(int Origem, int Destino, int Socket, int Sequencia, Mensagem mRecebido, Mensagem mEnviado);
 
 int checkParity(Mensagem mensagemRecebida);
 
+void showLine(short int *error, char *linha, char* arquivo);
+
+void strcut(char *Cortado, char *Resultado, char* Cortador);
+
+char* strbcut(char *Parametro3, char *Conteudo, int local, int tam);
+
+char* list(int index, long int *tamanhoLS);
+
+char* linha(int numeroLinha, char *nomeArquivo, long int *tamLinha, int local);
 
 #endif
