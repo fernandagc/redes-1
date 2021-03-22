@@ -591,7 +591,7 @@ int main()
                         break;
 
                     time(&inicio);
-                    while (((recebida.Tipo != ACK && recebida.Tipo != NACK) || (int)recebida.Sequencia != Sequencia) ) || (recebida.Inicio != INITMSG)  {
+                    while (((recebida.Tipo != ACK && recebida.Tipo != NACK) || (int)recebida.Sequencia != Sequencia) || (recebida.Inicio != INITMSG))  {
                         recebida = receiveMsg(Socket, recebida);
                         time(&limite);
                         if (difftime(limite, inicio) > 1) {

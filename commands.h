@@ -3,7 +3,7 @@
 
 #ifndef __COMMANDS__
 #define __COMMANDS__
-#define INITMSG 0x3a7
+#define INITMSG 0x3a
 #define TAM_MSG 15
 #define Cliente 10
 #define Servidor 01

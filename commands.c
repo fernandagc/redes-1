@@ -15,22 +15,22 @@
 #include <linux/if_packet.h>
 #include <stdbool.h>
 
-int rawSocket()
+int ConexaoRawSocket()
 {
-  int socket;
+  int soquete;
   struct ifreq ir;
   struct sockaddr_ll endereco;
   struct packet_mreq mr;
 
-  socket = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));  	/*cria socket*/
-  if (socket == -1) {
+  soquete = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));  	/*cria socket*/
+  if (soquete == -1) {
     printf("Erro no Socket\n");
     exit(-1);
   }
 
   memset(&ir, 0, sizeof(struct ifreq));  	/*dispositivo lo*/
   memcpy(ir.ifr_name, "lo", sizeof("lo"));
-  if (ioctl(socket, SIOCGIFINDEX, &ir) == -1) {
+  if (ioctl(soquete, SIOCGIFINDEX, &ir) == -1) {
     printf("Erro no ioctl\n");
     exit(-1);
   }
@@ -40,7 +40,7 @@ int rawSocket()
   endereco.sll_family = AF_PACKET;
   endereco.sll_protocol = htons(ETH_P_ALL);
   endereco.sll_ifindex = ir.ifr_ifindex;
-  if (bind(socket, (struct sockaddr *)&endereco, sizeof(endereco)) == -1) {
+  if (bind(soquete, (struct sockaddr *)&endereco, sizeof(endereco)) == -1) {
     printf("Erro no bind\n");
     exit(-1);
   }
@@ -49,12 +49,12 @@ int rawSocket()
   memset(&mr, 0, sizeof(mr));          /*Modo Promiscuo*/
   mr.mr_ifindex = ir.ifr_ifindex;
   mr.mr_type = PACKET_MR_PROMISC;
-  if (setsockopt(socket, SOL_PACKET, PACKET_ADD_MEMBERSHIP, &mr, sizeof(mr)) == -1)	{
+  if (setsockopt(soquete, SOL_PACKET, PACKET_ADD_MEMBERSHIP, &mr, sizeof(mr)) == -1)	{
     printf("Erro ao fazer setsockopt\n");
     exit(-1);
   }
  
-  return socket;
+  return soquete;
 }
 
 char* initPort(int tam)
@@ -253,7 +253,8 @@ char* ver(char *nomeArquivo,long int *tamArquivo, int local)
 
 void edit(int numeroLinha,char *nomeArquivo, char *txt, int tamConteudo)
 {
-    FILE* backup, novo;
+	FILE* novo;
+    FILE* backup;
     int i = 1;
     char* linha = NULL;
     linha = malloc(1024 * sizeof(char));
@@ -336,8 +337,8 @@ Mensagem newMsg(int Origem, int Destino, char *Dados, int Tipo, int Sequencia)
     Mensagem m;
     m.Inicio = INITMSG;
     m.Tamanho = (unsigned char)strlen(Dados);
-    m.Origem = (unsigned char)strlen(Origem);
-    m.Destino = (unsigned char)strlen(Destino);
+    m.Origem = (unsigned char)Origem;
+    m.Destino = (unsigned char)Destino;
     m.Sequencia = (unsigned char)Sequencia;
     m.Tipo = (unsigned char)Tipo;
     strcpy((char *)m.Dados, Dados);
@@ -568,7 +569,8 @@ char* linha(int numeroLinha, char *nomeArquivo, long int *tamLinha, int local)
 {    
     FILE* arq;
     arq = fopen(nomeArquivo, "r");
-    char* Conteudo = NULL, linha = NULL;
+    char* Conteudo = NULL, 
+	char* linha = NULL;
     Conteudo = malloc(TAM_MSG * sizeof(char));
     linha = malloc(1024 * sizeof(char));
     
