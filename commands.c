@@ -15,7 +15,7 @@
 #include <linux/if_packet.h>
 #include <stdbool.h>
 
-int ConexaoRawSocket()
+int rawSocket()
 {
   int soquete;
   struct ifreq ir;
