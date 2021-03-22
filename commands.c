@@ -469,12 +469,12 @@ void showLine(short int *error, char *linha, char *arquivo)
 //////ACHAR FUNCAO
 void strcut(char *Cortado, char *Resultado, char* Cortador)
 {
-    int tam = strlen(Cortado), j = 0;
+    int tam = strlen(Cortado), j = 0; i = 0;
     bool flag = false;
     char *Aux = NULL;
     Aux = malloc(sizeof(BUFFER)); 
     
-    for (int i = 0; i <= tam-1; i++)
+    for (i = 0; i <= tam-1; i++)
     {   
         if ((Cortado[i] == Cortador[0]) && !(flag))
         {
@@ -569,7 +569,7 @@ char* linha(int numeroLinha, char *nomeArquivo, long int *tamLinha, int local)
 {    
     FILE* arq;
     arq = fopen(nomeArquivo, "r");
-    char* Conteudo = NULL, 
+    char* Conteudo = NULL; 
 	char* linha = NULL;
     Conteudo = malloc(TAM_MSG * sizeof(char));
     linha = malloc(1024 * sizeof(char));
