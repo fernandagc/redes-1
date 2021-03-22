@@ -10,8 +10,8 @@
 #define ACK 0x8
 #define NACK 0x9
 #define TAM_MSG 15
-#define CLIENTE 10
-#define SERVIDOR 01
+#define Cliente 10
+#define Servidor 01
 
 typedef struct Mensagem
 {
@@ -39,9 +39,9 @@ void ls(short int *error);
 
 char* lls(int index, long int *tamanhoLS);
 
-void ver(short int *error, char *arquivo);
+void verArquivo(short int *error, char *arquivo);
 
-char* verArquivo(char *nomeArquivo,long int *tamArquivo, int local);
+char* ver(char *nomeArquivo,long int *tamArquivo, int local);
 
 void edit(int numeroLinha,char *nomeArquivo, char *txt, int tamConteudo);
 
