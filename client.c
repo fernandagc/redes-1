@@ -154,7 +154,7 @@ int main()
                             enviaNACK(Cliente, Servidor, Socket, Sequencia, mRecebido, mEnviado);
                         }
                         Sequencia++;
-                        enviaACK(Socket, Sequencia, 0x8, mRecebido, mEnviado);
+                        enviaACK(Cliente, Servidor, Socket, Sequencia, 0x8, mRecebido, mEnviado);
                     }
                     
                     if(mRecebido.Tipo == 0xF)
@@ -203,7 +203,7 @@ int main()
                         {
                             if (!checkParity(mRecebido))
                                 enviaNACK(Cliente, Servidor, Socket, Sequencia, mRecebido, mEnviado);
-                            enviaACK(Socket, Sequencia, 0x8, mRecebido, mEnviado);
+                            enviaACK(Cliente, Servidor, Socket, Sequencia, 0x8, mRecebido, mEnviado);
                         }
                         
                         if (mRecebido.Sequencia == 1)
@@ -254,7 +254,7 @@ int main()
                             enviaNACK(Cliente, Servidor, Socket, Sequencia, mRecebido, mEnviado);
                         }
                         Sequencia++;
-                        enviaACK(Socket, Sequencia, 0x8, mRecebido, mEnviado);
+                        enviaACK(Cliente, Servidor, Socket, Sequencia, 0x8, mRecebido, mEnviado);
                     }
                     
                     if(mRecebido.Tipo == 0xF)
@@ -304,7 +304,7 @@ int main()
                         {
                             if (!checkParity(mRecebido))
                                 enviaNACK(Cliente, Servidor, Socket, Sequencia, mRecebido, mEnviado);
-                            enviaACK(Socket, Sequencia, 0x8, mRecebido, mEnviado);
+                            enviaACK(Cliente, Servidor, Socket, Sequencia, 0x8, mRecebido, mEnviado);
                         }
                         
                         for (int i = 0; i < (int)mRecebido.Tamanho; i++)
@@ -384,7 +384,7 @@ int main()
                             enviaNACK(Cliente, Servidor, Socket, Sequencia, mRecebido, mEnviado);
                         }
                         Sequencia++;
-                        enviaACK(Socket, Sequencia, 0x8, mRecebido, mEnviado);
+                        enviaACK(Cliente, Servidor, Socket, Sequencia, 0x8, mRecebido, mEnviado);
                     }
                     
 
@@ -422,7 +422,7 @@ int main()
                         {
                             if (!checkParity(mRecebido))
                                 enviaNACK(Cliente, Servidor, Socket, Sequencia, mRecebido, mEnviado);
-                            enviaACK(Socket, Sequencia, 0x8, mRecebido, mEnviado);
+                            enviaACK(Cliente, Servidor, Socket, Sequencia, 0x8, mRecebido, mEnviado);
                         }
                         
                         for (int i = 0; i < (int)mRecebido.Tamanho; i++)
@@ -510,7 +510,7 @@ int main()
 
                         Sequencia++;
 
-                        enviaACK(Socket, Sequencia, 0x8, mRecebido, mEnviado);
+                        enviaACK(Cliente, Servidor, Socket, Sequencia, 0x8, mRecebido, mEnviado);
                     }
                     
 
@@ -548,7 +548,7 @@ int main()
                         {
                             if (!checkParity(mRecebido))
                                 enviaNACK(Cliente, Servidor, Socket, Sequencia, mRecebido, mEnviado);
-                            enviaACK(Socket, Sequencia, 0x8, mRecebido, mEnviado);
+                            enviaACK(Cliente, Servidor, Socket, Sequencia, 0x8, mRecebido, mEnviado);
                         }
                         
                         for (int i = 0; i < (int)mRecebido.Tamanho; i++)
@@ -647,7 +647,7 @@ int main()
                             enviaNACK(Cliente, Servidor, Socket, Sequencia, mRecebido, mEnviado);
                         }
                         Sequencia++;
-                        enviaACK(Socket, Sequencia, 0xc, mRecebido, mEnviado);
+                        enviaACK(Cliente, Servidor, Socket, Sequencia, 0xc, mRecebido, mEnviado);
 
                     }
                     
@@ -724,7 +724,7 @@ int main()
                             Sequencia = 0;
                             multSeq++;
                         }
-                        enviaACK(Socket, Sequencia, 0xd, mRecebido, mEnviado);
+                        enviaACK(Cliente, Servidor, Socket, Sequencia, 0xd, mRecebido, mEnviado);
                     }
                     break;
                 

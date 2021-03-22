@@ -53,9 +53,9 @@ int comparar(Mensagem priMsg, Mensagem ultMsg);
 
 Mensagem newMsg(int Origem, int Destino, char *Dados, int Tipo, int Sequencia);
 
-void enviaACK(int Soquete, int Sequencia, int Tipo, Mensagem mRecebido, Mensagem mEnviado);
+void enviaACK(int Origem, int Destino, int Soquete, int Sequencia, int Tipo, Mensagem mRecebido, Mensagem mEnviado);
 
-void enviaERR(int Soquete, int Sequencia, int Tipo, short int  error, Mensagem mEnviado);
+void enviaERR(int Origem, int Destino, int Soquete, int Sequencia, int Tipo, short int  error, Mensagem mEnviado);
 
 Mensagem trataNACK(int Soquete, int Sequencia, Mensagem mRecebido, Mensagem mEnviado);
 

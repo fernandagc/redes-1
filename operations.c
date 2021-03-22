@@ -350,13 +350,13 @@ Mensagem newMsg(int Origem, int Destino, char *Dados, int Tipo, int Sequencia)
     return m;
 }
 
-void enviaACK(int Socket, int Origem, int Destino, int Sequencia, int Tipo, Mensagem mRecebido, Mensagem mEnviado)
+void enviaACK(int Origem, int Destino, int Socket, int Sequencia, int Tipo, Mensagem mRecebido, Mensagem mEnviado)
 {
     mEnviado = newMsg(Origem, Destino, "\0", Tipo, Sequencia);
     sendMsg(Socket, mEnviado);
 }
 
-void enviaERR(int Socket, int Origem, int Destino, int Sequencia, int Tipo, short int  error, Mensagem mEnviado)
+void enviaERR(int Origem, int Destino, int Socket, int Sequencia, int Tipo, short int  error, Mensagem mEnviado)
 {
     switch (error)
     {

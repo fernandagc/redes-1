@@ -64,12 +64,12 @@ int main()
                 cd(&error, Parametro1);
                 if (error == 0)
                 {
-                    enviaACK(Socket, Sequencia, ACK, mRecebido, mEnviado);
+                    enviaACK(Servidor, Cliente, Socket, Sequencia, ACK, mRecebido, mEnviado);
                     Sequencia++;
                 }
                 else
                 {
-                    enviaERR(Socket, Sequencia, 0xF, error, mEnviado); 
+                    enviaERR(Servidor, Cliente, Socket, Sequencia, 0xF, error, mEnviado); 
                     break;
                 }
                 
@@ -82,12 +82,12 @@ int main()
 
                 if (error == 0)
                 {
-                    enviaACK(Socket, Sequencia, 0xb, mRecebido, mEnviado);
+                    enviaACK(Servidor, Cliente, Socket, Sequencia, 0xb, mRecebido, mEnviado);
                     Sequencia++;
                 }
                 else
                 {
-                    enviaERR(Socket, Sequencia, 0xF, error, mEnviado); 
+                    enviaERR(Servidor, Cliente, Socket, Sequencia, 0xF, error, mEnviado); 
                     break;
                 }
                 mRecebido.Inicio = 0;
@@ -193,7 +193,7 @@ int main()
                 if (mRecebido.Tipo == 0x8)
                 {    
 
-                    enviaACK(Socket, Sequencia, 0xd, mRecebido, mEnviado);
+                    enviaACK(Servidor, Cliente, Socket, Sequencia, 0xd, mRecebido, mEnviado);
                 }
         
             break;
@@ -206,12 +206,12 @@ int main()
 
                 if (error == 0)
                 {
-                    enviaACK(Socket, Sequencia, 0xc, mRecebido, mEnviado);
+                    enviaACK(Servidor, Cliente, Socket, Sequencia, 0xc, mRecebido, mEnviado);
                     Sequencia++;
                 }
                 else
                 {
-                    enviaERR(Socket, Sequencia, 0xF, error, mEnviado); 
+                    enviaERR(Servidor, Cliente, Socket, Sequencia, 0xF, error, mEnviado); 
                     break;
                 }
 
@@ -314,7 +314,7 @@ int main()
                 
                 if (mRecebido.Tipo == 0x8)
                 {    
-                    enviaACK(Socket, Sequencia, 0xd, mRecebido, mEnviado);
+                    enviaACK(Servidor, Cliente, Socket, Sequencia, 0xd, mRecebido, mEnviado);
                 }    
                 break;
 
@@ -326,12 +326,12 @@ int main()
 
                 if (error == 0)
                 {
-                    enviaACK(Socket, Sequencia, ACK, mRecebido, mEnviado);
+                    enviaACK(Servidor, Cliente, Socket, Sequencia, ACK, mRecebido, mEnviado);
                     Sequencia++;
                 }
                 else
                 {
-                    enviaERR(Socket, Sequencia, 0xF, error, mEnviado);
+                    enviaERR(Servidor, Cliente, Socket, Sequencia, 0xF, error, mEnviado);
                     break;
                 }
                 
@@ -452,7 +452,7 @@ int main()
                 
                 if (mRecebido.Tipo == 0x8)
                 {    
-                    enviaACK(Socket, Sequencia, 0xd, mRecebido, mEnviado);
+                    enviaACK(Servidor, Cliente, Socket, Sequencia, 0xd, mRecebido, mEnviado);
                 }    
                 break;
 //-----------------LINHAS---------------------------------------------------------------------------------------------------------------------------
@@ -463,12 +463,12 @@ int main()
 
                 if (error == 0)
                 {
-                    enviaACK(Socket, Sequencia, ACK, mRecebido, mEnviado);
+                    enviaACK(Servidor, Cliente, Socket, Sequencia, ACK, mRecebido, mEnviado);
                     Sequencia++;
                 }
                 else
                 {
-                    enviaERR(Socket, Sequencia, 0xF, error, mEnviado); 
+                    enviaERR(Servidor, Cliente, Socket, Sequencia, 0xF, error, mEnviado); 
                     break;
                 }
                 
@@ -619,7 +619,7 @@ int main()
                 
                 if (mRecebido.Tipo == 0x8)
                 {    
-                    enviaACK(Socket, Sequencia, 0xd, mRecebido, mEnviado);
+                    enviaACK(Servidor, Cliente, Socket, Sequencia, 0xd, mRecebido, mEnviado);
                 }
                 break; 
 
@@ -633,12 +633,12 @@ int main()
                 verArquivo(&error, Parametro2);
                 if (error == 0)
                 {
-                    enviaACK(Socket, Sequencia, ACK, mRecebido, mEnviado);
+                    enviaACK(Servidor, Cliente, Socket, Sequencia, ACK, mRecebido, mEnviado);
                     Sequencia++;
                 }
                 else
                 {
-                    enviaERR(Socket, Sequencia, 0xF, error, mEnviado); 
+                    enviaERR(Servidor, Cliente, Socket, Sequencia, 0xF, error, mEnviado); 
                     break;
                 }
                 
@@ -678,7 +678,7 @@ int main()
                     }
                     else
                     {
-                        enviaERR(Socket, Sequencia, 0xF, error, mEnviado);
+                        enviaERR(Servidor, Cliente, Socket, Sequencia, 0xF, error, mEnviado);
                         break;
                     }
                 }
@@ -710,7 +710,7 @@ int main()
                     {
                         if (!checkParity(mRecebido))
                             enviaNACK(Servidor, Cliente, Socket, Sequencia, mRecebido, mEnviado);
-                        enviaACK(Socket, Sequencia, 0x8, mRecebido, mEnviado);
+                        enviaACK(Servidor, Cliente, Socket, Sequencia, 0x8, mRecebido, mEnviado);
                     }
                     
                     Sequencia++;
