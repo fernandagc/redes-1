@@ -469,7 +469,7 @@ void showLine(short int *error, char *linha, char *arquivo)
 //////ACHAR FUNCAO
 void strcut(char *Cortado, char *Resultado, char* Cortador)
 {
-    int tam = strlen(Cortado), j = 0; i = 0;
+    int tam = strlen(Cortado), j = 0, i = 0;
     bool flag = false;
     char *Aux = NULL;
     Aux = malloc(sizeof(BUFFER)); 
